@@ -1,0 +1,59 @@
+name: ✨ Feature request
+description: Suggest something — but read the scope doc first
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Please read [docs/SCOPE.md](../blob/main/docs/SCOPE.md) before filing this.**
+
+        This app does three things: collect a GitHub username and PR link, let an organizer
+        score it by hand, and show a leaderboard. GitHub OAuth, GitHub API calls, webhooks,
+        automatic PR verification, teams, profiles, badges, and notifications are all
+        **excluded on purpose**.
+
+        Requests for excluded features will be closed with a link to the scope doc.
+
+  - type: checkboxes
+    id: scope_check
+    attributes:
+      label: Scope check
+      options:
+        - label: I read SCOPE.md and this isn't on the "out of scope" list
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The problem, not your preferred solution.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: helps
+    attributes:
+      label: Which of the three things does this help with?
+      description: If the answer is "none of them", it's out of scope.
+      options:
+        - Submitting a PR link
+        - Scoring a submission
+        - Showing the leaderboard
+        - None of these
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you build?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: followup
+    attributes:
+      label: Follow-up
+      options:
+        - label: I'd like to build this myself

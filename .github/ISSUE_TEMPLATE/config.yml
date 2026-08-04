@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📋 What this app does and doesn't do
+    url: https://github.com/ORG/COMMIT-ed/blob/main/docs/SCOPE.md
+    about: Read before filing a feature request
+  - name: 🗺️ Roadmap
+    url: https://github.com/ORG/COMMIT-ed/blob/main/docs/ROADMAP.md
+    about: What's being built, in order
+  - name: 💬 Discussions
+    url: https://github.com/ORG/COMMIT-ed/discussions
+    about: Questions and general chat

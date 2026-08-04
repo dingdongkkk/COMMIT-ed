@@ -1,0 +1,50 @@
+name: 🐛 Bug report
+description: Something in the app is broken
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where?
+      options:
+        - Submit form
+        - Leaderboard
+        - Admin page
+        - Setup / running it locally
+        - Somewhere else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Include the error message if there is one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /submit
+        2. Enter '...'
+        3. Click Submit
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Browser / environment
+      placeholder: Firefox 134 on Android, or "local dev, Node 22"
