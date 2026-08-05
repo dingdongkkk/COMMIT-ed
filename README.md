@@ -3,11 +3,20 @@
 A leaderboard app for an open source event.
 
 Contributors generate a downloadable badge from their GitHub handle, submit their pull
-request links, and watch the standings. An admin reviews each submission by hand and
-assigns the points.
+request links, and watch the standings.
 
-The app stores and displays. It does not judge — **points are typed in by an admin**, and
-the scoring rules are yours to decide, kept outside this repo.
+**Points come from the pull request's difficulty label**, set by the project admin on the
+repository the PR was opened against:
+
+| Label | Points |
+|---|---|
+| `easy` | 2 |
+| `medium` | 5 |
+| `hard` | 10 |
+
+Nothing reaches the leaderboard on labels alone. An organiser opens each pull request,
+checks the work is real, and approves it — that stamp is what makes the points count. They
+can revoke an approved score at any time, and reinstate it later.
 
 ## Screens
 
@@ -26,18 +35,22 @@ Node.js 24+ and nothing else — **zero dependencies**.
 - `node:http` for the server, hand-rolled router, server-rendered HTML
 - `node:sqlite` for storage
 - `node:crypto` for signed session cookies and CSRF tokens
+- One GitHub API call per submission, to read the pull request's labels
 - The badge is drawn client-side on a `<canvas>`; the avatar comes from
-  `avatars.githubusercontent.com`, so there are no GitHub API calls or tokens
+  `avatars.githubusercontent.com`
 
 ## Setup
 
 ```bash
 git clone https://github.com/ORG/COMMIT-ed.git
 cd COMMIT-ed
-cp .env.example .env    # set ADMIN_PASSWORD and SESSION_SECRET
+cp .env.example .env    # set ADMIN_PASSWORD, SESSION_SECRET and GITHUB_TOKEN
 npm run init-db
 npm start               # http://localhost:3000
 ```
+
+`GITHUB_TOKEN` is optional but wanted: without it the whole server shares GitHub's
+60 label lookups per hour, which an event burns through in minutes.
 
 `npm run dev` restarts on file changes. Full details in [docs/SETUP.md](docs/SETUP.md).
 
@@ -46,6 +59,8 @@ npm start               # http://localhost:3000
 ```
 src/
   server.js     routing, request handling
+  github.js     the one call out: reading a pull request's labels
+  points.js     the label → points table and how labels are matched
   db.js         schema + every query
   security.js   sessions, CSRF, rate limiting
   validate.js   input rules

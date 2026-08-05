@@ -840,6 +840,59 @@ input:focus, select:focus {
 .btn.small:hover { box-shadow: 5px 6px 0 var(--ink); }
 .btn.small:active { box-shadow: 1px 1px 0 var(--ink); }
 
+/* ---------- label chips and the score a PR is worth ---------- */
+
+.chips { display: inline-flex; gap: 6px; flex-wrap: wrap; margin: 0; }
+.chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: var(--pink-pale);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.chip.none { background: transparent; border-style: dashed; color: var(--muted); }
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 2px dashed rgba(21, 10, 18, 0.18);
+  border-bottom: 2px dashed rgba(21, 10, 18, 0.18);
+  padding: 12px 0;
+}
+.worth {
+  font-size: 20px;
+  font-weight: 900;
+  font-style: italic;
+  border: 2.5px solid var(--ink);
+  border-radius: 8px;
+  padding: 2px 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.worth.has-tier { background: var(--yellow); }
+.worth.no-tier { background: var(--pink-pale); color: var(--muted); }
+.score-note { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+.score-callout {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 18px 20px;
+  margin: 0 0 22px;
+  display: grid;
+  gap: 10px;
+}
+.score-callout p { margin: 0; font-weight: 600; }
+
+/* The refresh button sits just under the card it belongs to. */
+.refresh { margin: -8px 0 18px; }
+.btn.small.ghost { background: var(--paper); }
+
 /* ---------- tables ---------- */
 
 .board {
@@ -928,8 +981,8 @@ input:focus, select:focus {
   flex-wrap: wrap;
 }
 .board .adjust input { font-size: 14px; padding: 8px 10px; }
-.board .adjust .pts-in { width: 84px; flex: none; }
-.board .adjust .note-in { flex: 1; min-width: 130px; width: auto; }
+.board .adjust .note-in { flex: 1; min-width: 120px; width: auto; }
+.board .labels { max-width: 190px; }
 .board tbody tr:hover { transform: none; }
 .board tbody tr:hover .rank { transform: scale(1.3); }
 
@@ -1016,7 +1069,7 @@ input:focus, select:focus {
   .skyline { width: 170vw; }
   .site-head { flex-wrap: wrap; gap: 12px; }
   .site-head nav { order: 3; width: 100%; margin-left: 0; }
-  .board .pr, .board .note { display: none; }
+  .board .pr, .board .note, .board .labels { display: none; }
   .corner-web { top: -84px; opacity: 0.55; }
   .hang-line { height: 150px; }
   /* The poster shadow has to shrink with the type, or lines collide. */

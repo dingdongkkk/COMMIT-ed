@@ -31,10 +31,3 @@ export function validateName(raw) {
   if (name.length > 60) return { error: 'Name is too long (60 characters max).' };
   return { value: name };
 }
-
-export function validatePoints(raw) {
-  const points = Number.parseInt(String(raw ?? '').trim(), 10);
-  if (!Number.isInteger(points)) return { error: 'Points must be a whole number.' };
-  if (points < 0 || points > 1000) return { error: 'Points must be between 0 and 1000.' };
-  return { value: points };
-}

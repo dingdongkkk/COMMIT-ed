@@ -28,6 +28,7 @@ node -v    # must be >= 24
 |---|---|---|
 | `ADMIN_PASSWORD` | yes | Guards `/admin`. The app refuses to start if it is unset or still `change-me`. |
 | `SESSION_SECRET` | recommended | Signs admin session cookies. Unset means a random secret per boot, so every restart logs admins out. |
+| `GITHUB_TOKEN` | strongly recommended | Reads PR labels. Unset, the whole server shares 60 lookups/hour; with a token, 5000. A classic token with no scopes works for public repos. |
 | `DATABASE_URL` | no | SQLite file path. Defaults to `data.db`. |
 | `PORT` | no | Defaults to 3000 |
 | `NODE_ENV` | no | Set to `production` to mark session cookies `Secure` |
@@ -96,6 +97,7 @@ sqlite3 data.db ".backup 'backup-$(date +%F).db'"
 | App won't start | Is `ADMIN_PASSWORD` set to something other than `change-me`? Is Node >= 22.5? |
 | Admins logged out after a restart | `SESSION_SECRET` is unset, so a new one is generated each boot |
 | Badge avatar does not appear | The GitHub username has no account, or the network blocks `avatars.githubusercontent.com` |
+| Everything shows 0 points | The PRs carry no `easy`/`medium`/`hard` label, or lookups are rate limited — set `GITHUB_TOKEN` and hit "re-check labels" |
 | `/admin` rejects the right password | Environment variable loaded? Restart after editing `.env` |
 | Leaderboard is empty but submissions exist | They're still `pending` — only `approved` rows count |
 | Duplicate submission throws a 500 | The unique constraint on `pr_url` fired; catch it and show a message |

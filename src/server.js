@@ -10,11 +10,16 @@ import {
   findOrCreateParticipant,
   insertSubmission,
   adjustSubmission,
+  getSubmission,
   leaderboard,
+  readLabels,
+  saveLabels,
   submissionsByStatus,
   reviewSubmission,
   stats,
 } from './db.js';
+import { fetchPrLabels } from './github.js';
+import { scoreLabels } from './points.js';
 import {
   clearSession,
   clientIp,
@@ -25,12 +30,7 @@ import {
   isAuthenticated,
   rateLimiter,
 } from './security.js';
-import {
-  validateName,
-  validatePoints,
-  validatePrUrl,
-  validateUsername,
-} from './validate.js';
+import { validateName, validatePrUrl, validateUsername } from './validate.js';
 import {
   adminLoginPage,
   adminPage,
@@ -47,6 +47,13 @@ if (!ADMIN_PASSWORD || ADMIN_PASSWORD === 'change-me') {
     'ADMIN_PASSWORD is unset (or still "change-me"). Set it in .env before starting.',
   );
   process.exit(1);
+}
+
+if (!process.env.GITHUB_TOKEN) {
+  console.warn(
+    'GITHUB_TOKEN is unset — label lookups are capped at 60/hour for the whole ' +
+      'server. Set a token before the event.',
+  );
 }
 
 if (!process.env.SESSION_SECRET) {
@@ -153,9 +160,10 @@ const routes = {
     const error = name.error || username.error || prUrl.error;
     if (error) return send(res, 400, submitPage({ values, error }));
 
+    let submissionId;
     try {
       const participantId = findOrCreateParticipant(db, username.value, name.value);
-      insertSubmission(db, participantId, prUrl.value);
+      submissionId = insertSubmission(db, participantId, prUrl.value);
     } catch (err) {
       if (String(err.message).includes('UNIQUE')) {
         return send(
@@ -167,12 +175,19 @@ const routes = {
       throw err;
     }
 
+    // Read the difficulty label now so the contributor sees what it is worth.
+    const lookup = await fetchPrLabels(prUrl.value);
+    const { labels } = lookup;
+    saveLabels(db, submissionId, labels, lookup.error);
+    const { tier, points } = scoreLabels(labels);
+
     return send(
       res,
       200,
       submitPage({
         values: {},
-        success: `Submitted. Your pull request is pending review — check the leaderboard once an organiser has scored it.`,
+        success: 'Submitted — your pull request is now waiting for an organiser to check it.',
+        scored: { tier, points, labels, error: lookup.error },
       }),
     );
   },
@@ -236,13 +251,11 @@ async function handleReview(req, res, id) {
   }
 
   const note = String(form.get('note') || '').trim().slice(0, 300);
-  // A rejection never carries points, whatever is sitting in the input box.
-  let points = 0;
-  if (action === 'approve') {
-    const parsed = validatePoints(form.get('points'));
-    if (parsed.error) return send(res, 400, errorPage(400, parsed.error, '/admin'));
-    points = parsed.value;
-  }
+
+  // The label decides the score; approving is the organiser's stamp on it.
+  const row = getSubmission(db, id);
+  if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  const points = action === 'approve' ? scoreLabels(readLabels(row)).points : 0;
 
   const outcome = reviewSubmission(db, id, {
     status: action === 'approve' ? 'approved' : 'rejected',
@@ -275,20 +288,17 @@ async function handleAdjust(req, res, id) {
   }
 
   const action = form.get('action');
-  if (action !== 'update' && action !== 'revoke') {
+  if (action !== 'restore' && action !== 'revoke') {
     return send(res, 400, errorPage(400, 'Unknown action.', '/admin'));
   }
 
   const note = String(form.get('note') || '').trim().slice(0, 300);
-  let points = 0;
-  if (action === 'update') {
-    const parsed = validatePoints(form.get('points'));
-    if (parsed.error) return send(res, 400, errorPage(400, parsed.error, '/admin'));
-    points = parsed.value;
-  }
+  const row = getSubmission(db, id);
+  if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  const points = action === 'restore' ? scoreLabels(readLabels(row)).points : 0;
 
   const outcome = adjustSubmission(db, id, {
-    status: action === 'update' ? 'approved' : 'rejected',
+    status: action === 'restore' ? 'approved' : 'rejected',
     points,
     note,
   });
@@ -305,6 +315,21 @@ async function handleAdjust(req, res, id) {
   redirect(res, '/admin');
 }
 
+async function handleRefresh(req, res, id) {
+  if (!requireAdmin(req, res)) return;
+  const form = await readBody(req);
+  if (!csrfValid(req, form.get('csrf'))) {
+    return send(res, 403, errorPage(403, 'Bad CSRF token. Reload the admin page.', '/admin'));
+  }
+
+  const row = getSubmission(db, id);
+  if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+
+  const { labels, error } = await fetchPrLabels(row.pr_url);
+  saveLabels(db, id, labels, error);
+  redirect(res, '/admin');
+}
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -314,12 +339,12 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const action = pathname.match(/^\/admin\/submissions\/(\d+)\/(review|adjust)$/);
+    const action = pathname.match(/^\/admin\/submissions\/(\d+)\/(review|adjust|refresh)$/);
     if (action && req.method === 'POST') {
       const id = Number(action[1]);
-      return action[2] === 'review'
-        ? await handleReview(req, res, id)
-        : await handleAdjust(req, res, id);
+      if (action[2] === 'review') return await handleReview(req, res, id);
+      if (action[2] === 'adjust') return await handleAdjust(req, res, id);
+      return await handleRefresh(req, res, id);
     }
 
     const handler = routes[`${req.method} ${pathname}`];

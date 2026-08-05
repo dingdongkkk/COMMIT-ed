@@ -29,6 +29,8 @@ Renders the form. Three fields: `name` (optional), `github_username`, `pr_url`.
 | Find or create participant | Match on lowercased `github_username` |
 | Insert submission | `status = 'pending'`, `points = 0` |
 | Store the name | Saved on the participant, used on the leaderboard |
+| Read labels | One GitHub API call; a failure is stored, never fatal |
+| Show the score | Confirmation says what the PR is worth once approved |
 | Duplicate `pr_url` | Show "already submitted" — do not 500 |
 | Success | Confirmation message: submitted, pending review |
 
@@ -56,8 +58,10 @@ Pending submissions, oldest first. Each row shows:
 - GitHub username
 - PR link — **must open in a new tab** (`target="_blank" rel="noopener"`), since reviewing
   means actually looking at the PR
-- Points input
-- Approve button, Reject button, optional note field
+- The PR's labels, and the points they are worth (`easy` 2, `medium` 5, `hard` 10)
+- Approve button — stamps that score onto the leaderboard
+- Reject button, optional note field
+- A button to re-read the labels, for when the project admin adds one after submission
 
 ### `POST /admin/submissions/:id/review`
 
@@ -72,12 +76,17 @@ A review only applies to a `pending` row. If another organiser got there first, 
 one gets a 409 saying so and their score is not applied — two people working from stale
 queues can never overwrite each other.
 
+### `POST /admin/submissions/:id/refresh`
+
+Re-reads the pull request's labels from GitHub. Used when the project admin labels a PR
+after it was submitted.
+
 ### `POST /admin/submissions/:id/adjust`
 
-Correcting a row that has already been reviewed, from the inline controls in the reviewed
-table. `action` is `update` (set a new points value, keeping it approved) or `revoke`
-(status back to `rejected`, points to 0). Scores can be raised or lowered here at any time,
-with an optional note explaining why.
+Acting on a row that has already been reviewed, from the inline controls in the reviewed
+table. `action` is `revoke` (status to `rejected`, points to 0 — off the leaderboard at
+once) or `restore` (re-reads the stored label and approves it again), with an optional note
+explaining why.
 
 This route never touches a `pending` row, and `review` never touches a reviewed one — so
 the correction path can't be used to award a fresh pull request twice.
@@ -91,8 +100,8 @@ Clears the session.
 
 ## Not building
 
-No `/api/*`, no JSON endpoints, no GitHub API calls, no webhook receiver, no OAuth
-callback, no user profiles, no teams. Server-rendered pages and form posts are enough.
+No `/api/*`, no JSON endpoints, no webhook receiver, no OAuth callback, no user profiles,
+no teams. The only outbound call is reading a pull request's labels. Server-rendered pages and form posts are enough.
 Client-side JavaScript is limited to two files: the badge generator and the presentation
 layer (`fx.js`). Neither talks to anything but the public avatar CDN.
 

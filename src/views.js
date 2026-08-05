@@ -1,3 +1,7 @@
+import { POINTS } from './points.js';
+import { readLabels } from './db.js';
+import { scoreSummary } from './points.js';
+
 export function escape(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -285,7 +289,25 @@ export function badgePage() {
   });
 }
 
-export function submitPage({ values = {}, error = '', success = '' } = {}) {
+function scoreCallout(scored) {
+  if (!scored) return '';
+  const chips = scored.labels.length
+    ? `<p class="chips">${scored.labels
+        .map((l) => `<span class="chip">${escape(l)}</span>`)
+        .join('')}</p>`
+    : '';
+  const line = scored.tier
+    ? `This pull request is labelled <strong>${escape(scored.tier)}</strong> — worth
+       <strong>${scored.points} points</strong> once an organiser approves it.`
+    : escape(
+        scored.error ||
+          'No difficulty label on it yet. Once the project admin adds one, it will be worth ' +
+            'points — an organiser re-checks at review time.',
+      );
+  return `<div class="score-callout"><p>${line}</p>${chips}</div>`;
+}
+
+export function submitPage({ values = {}, error = '', success = '', scored = null } = {}) {
   return layout({
     title: 'Submit a pull request',
     active: '/submit',
@@ -293,12 +315,14 @@ export function submitPage({ values = {}, error = '', success = '' } = {}) {
 <section class="page-head">
   <p class="eyebrow">For contributors</p>
   <h1>Submit your pull request</h1>
-  <p>One link per pull request. An organiser reviews it by hand and assigns the points.</p>
+  <p>One link per pull request. We read its difficulty label to work out the points; an
+     organiser then checks the work and approves it.</p>
 </section>
 
 <section class="narrow">
   ${flash(error, 'error')}
   ${flash(success, 'ok')}
+  ${scoreCallout(scored)}
   <form class="panel" method="post" action="/submit">
     <label>
       <span>Your name <span class="opt">(optional)</span></span>
@@ -315,8 +339,10 @@ export function submitPage({ values = {}, error = '', success = '' } = {}) {
              placeholder="https://github.com/owner/repo/pull/123">
     </label>
     <button class="btn primary" type="submit">Submit for review</button>
-    <p class="hint">Submitting does not award points. Your PR shows up as
-       <strong>pending</strong> until an organiser reviews it.</p>
+    <p class="hint">Points come from the difficulty label the project admin put on your pull
+       request — <strong>easy ${POINTS.easy}</strong>, <strong>medium ${POINTS.medium}</strong>,
+       <strong>hard ${POINTS.hard}</strong>. Nothing counts until an organiser checks the work
+       and approves it.</p>
   </form>
 </section>`,
   });
@@ -389,7 +415,14 @@ export function adminLoginPage({ error = '', csrf }) {
   });
 }
 
+function labelChips(labels) {
+  if (!labels.length) return '<span class="chip none">no labels</span>';
+  return labels.map((l) => `<span class="chip">${escape(l)}</span>`).join('');
+}
+
 function submissionRow(s, csrf) {
+  const labels = readLabels(s);
+  const score = scoreSummary(labels, s.label_error);
   return `<form class="review" method="post" action="/admin/submissions/${s.id}/review">
   <input type="hidden" name="csrf" value="${escape(csrf)}">
   <div class="review-who">
@@ -404,36 +437,51 @@ function submissionRow(s, csrf) {
   <a class="pr-link" href="${escape(s.pr_url)}" target="_blank" rel="noopener noreferrer">
     ${escape(s.pr_url)} ↗
   </a>
+  <div class="score-row">
+    <span class="worth ${score.tier ? 'has-tier' : 'no-tier'}">${score.points} pts</span>
+    <span class="chips">${labelChips(labels)}</span>
+    <span class="score-note">${escape(score.tier ? `labelled ${score.tier}` : score.text)}</span>
+  </div>
   <div class="review-controls">
-    <label class="pts-in">Points
-      <input name="points" type="number" min="0" max="1000" step="1" value="${s.points}">
-    </label>
     <label class="note-in"><span>Note <span class="opt">(optional)</span></span>
       <input name="note" maxlength="300" value="${escape(s.note)}" placeholder="Reason, context…">
     </label>
-    <button class="btn primary" name="action" value="approve" type="submit">Approve</button>
+    <button class="btn primary" name="action" value="approve" type="submit">
+      Approve ${score.points} pts
+    </button>
     <button class="btn danger" name="action" value="reject" type="submit">Reject</button>
   </div>
-</form>`;
+  </form>
+  <form class="refresh" method="post" action="/admin/submissions/${s.id}/refresh">
+    <input type="hidden" name="csrf" value="${escape(csrf)}">
+    <button class="btn small ghost" type="submit">Re-check labels on GitHub</button>
+  </form>`;
 }
 
 function reviewedRow(s, csrf) {
+  const labels = readLabels(s);
+  const score = scoreSummary(labels, s.label_error);
   return `<tr class="st-${escape(s.status)}">
   <td><a href="https://github.com/${escape(s.github_username)}" target="_blank"
          rel="noopener noreferrer">@${escape(s.github_username)}</a></td>
   <td class="pr"><a href="${escape(s.pr_url)}" target="_blank" rel="noopener noreferrer">${escape(
     s.pr_url.replace('https://github.com/', ''),
   )}</a></td>
+  <td class="labels"><span class="chips">${labelChips(labels)}</span></td>
   <td><span class="pill ${escape(s.status)}">${escape(s.status)}</span></td>
+  <td class="pts">${s.points}</td>
   <td class="adjust">
     <form method="post" action="/admin/submissions/${s.id}/adjust">
       <input type="hidden" name="csrf" value="${escape(csrf)}">
-      <input class="pts-in" name="points" type="number" min="0" max="1000" step="1"
-             value="${s.points}" aria-label="Points for @${escape(s.github_username)}">
       <input class="note-in" name="note" maxlength="300" value="${escape(s.note)}"
-             placeholder="Reason for the change…">
-      <button class="btn small" name="action" value="update" type="submit">Save</button>
-      <button class="btn small danger" name="action" value="revoke" type="submit">Revoke</button>
+             placeholder="Reason…">
+      ${
+        s.status === 'approved'
+          ? `<button class="btn small danger" name="action" value="revoke" type="submit">Revoke</button>`
+          : `<button class="btn small primary" name="action" value="restore" type="submit">
+               Approve ${score.points} pts
+             </button>`
+      }
     </form>
   </td>
 </tr>`;
@@ -448,7 +496,9 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
   <div>
     <p class="eyebrow">Review queue</p>
     <h1>Admin</h1>
-    <p>Open each pull request, read the diff, then type in the points it earned.</p>
+    <p>Points come from the pull request's difficulty label — easy ${POINTS.easy}, medium
+     ${POINTS.medium}, hard ${POINTS.hard}. Open each one, check the work is real, then
+     approve or reject it.</p>
   </div>
   <form method="post" action="/admin/logout">
     <input type="hidden" name="csrf" value="${escape(csrf)}">
@@ -473,13 +523,14 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
   }
 
   <h2 class="sec">Reviewed (${reviewed.length})</h2>
-  <p class="hint" style="margin:-6px 0 14px">Scores can be raised, lowered or revoked here
-     at any point — the leaderboard updates immediately.</p>
+  <p class="hint" style="margin:-6px 0 14px">Revoking pulls the points off the leaderboard
+     immediately. Reinstating re-reads the label and awards it again.</p>
   ${
     reviewed.length === 0
       ? '<p class="empty">Nothing reviewed yet.</p>'
       : `<table class="board reviewed">
-    <thead><tr><th>Who</th><th>PR</th><th>Status</th><th>Points &amp; note — change any time</th></tr></thead>
+    <thead><tr><th>Who</th><th>PR</th><th>Labels</th><th>Status</th><th>Pts</th>
+      <th>Revoke or reinstate</th></tr></thead>
     <tbody>${reviewed.map((s) => reviewedRow(s, csrf)).join('\n')}</tbody>
   </table>`
   }

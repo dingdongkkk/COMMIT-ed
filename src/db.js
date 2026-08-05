@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS submissions (
   id             INTEGER PRIMARY KEY,
   participant_id INTEGER NOT NULL REFERENCES participants(id),
   pr_url         TEXT NOT NULL UNIQUE,
+  labels         TEXT NOT NULL DEFAULT '',
+  label_error    TEXT,
   points         INTEGER NOT NULL DEFAULT 0,
   status         TEXT NOT NULL DEFAULT 'pending'
                  CHECK (status IN ('pending','approved','rejected')),
@@ -45,7 +47,22 @@ export function openDb(url = process.env.DATABASE_URL) {
   db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** Databases created before labels existed get the columns added in place. */
+function migrate(db) {
+  const columns = db
+    .prepare('PRAGMA table_info(submissions)')
+    .all()
+    .map((c) => c.name);
+  if (!columns.includes('labels')) {
+    db.exec("ALTER TABLE submissions ADD COLUMN labels TEXT NOT NULL DEFAULT ''");
+  }
+  if (!columns.includes('label_error')) {
+    db.exec('ALTER TABLE submissions ADD COLUMN label_error TEXT');
+  }
 }
 
 export function findOrCreateParticipant(db, username, displayName) {
@@ -71,10 +88,27 @@ export function findOrCreateParticipant(db, username, displayName) {
 }
 
 export function insertSubmission(db, participantId, prUrl) {
-  db.prepare('INSERT INTO submissions (participant_id, pr_url) VALUES (?, ?)').run(
-    participantId,
-    prUrl,
+  const info = db
+    .prepare('INSERT INTO submissions (participant_id, pr_url) VALUES (?, ?)')
+    .run(participantId, prUrl);
+  return Number(info.lastInsertRowid);
+}
+
+/** Labels are stored newline-separated; '' means none were found. */
+export function saveLabels(db, id, labels, error) {
+  db.prepare('UPDATE submissions SET labels = ?, label_error = ? WHERE id = ?').run(
+    labels.join('\n'),
+    error || null,
+    id,
   );
+}
+
+export function readLabels(row) {
+  return row.labels ? row.labels.split('\n').filter(Boolean) : [];
+}
+
+export function getSubmission(db, id) {
+  return db.prepare('SELECT * FROM submissions WHERE id = ?').get(id);
 }
 
 export function leaderboard(db) {
