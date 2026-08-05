@@ -1,6 +1,6 @@
 # Schema
 
-Three tables. Illustrative SQL — adapt to your stack.
+Two tables. Illustrative SQL — adapt to your stack.
 
 ## `participants`
 
@@ -10,6 +10,7 @@ Created automatically on first submission. No password, no email, no profile.
 |---|---|---|
 | `id` | integer, PK | |
 | `github_username` | text, unique, not null | Stored lowercased, no `@` |
+| `display_name` | text, nullable | Optional, shown on the leaderboard instead of the handle |
 | `created_at` | timestamp | |
 
 ## `submissions`
@@ -32,13 +33,8 @@ whatever the admin enters.
 
 ## `admins`
 
-Skip this table entirely if you're using a single `ADMIN_PASSWORD` environment variable.
-
-| Column | Type | Notes |
-|---|---|---|
-| `id` | integer, PK | |
-| `username` | text, unique | |
-| `password_hash` | text | Hashed, never plaintext |
+Not implemented. A single `ADMIN_PASSWORD` environment variable guards `/admin`; add this
+table only if the event ever needs more than one organiser account.
 
 ## SQL
 
@@ -46,7 +42,8 @@ Skip this table entirely if you're using a single `ADMIN_PASSWORD` environment v
 CREATE TABLE participants (
   id              INTEGER PRIMARY KEY,
   github_username TEXT NOT NULL UNIQUE,
-  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  display_name    TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE submissions (
@@ -71,6 +68,7 @@ The entire business logic of the app.
 ```sql
 SELECT
   p.github_username,
+  p.display_name,
   COUNT(s.id)   AS prs,
   SUM(s.points) AS total_points
 FROM participants p
@@ -90,6 +88,8 @@ Only three checks. Everything else — does the PR exist, is it merged, is it ac
 | Field | Rule |
 |---|---|
 | `github_username` | `^[a-zA-Z0-9-]{1,39}$`, strip a leading `@`, lowercase before storing |
+| `name` | Optional, 60 characters max, whitespace collapsed |
+| `points` | Admin side only: whole number, 0–1000 |
 | `pr_url` | `^https://github\.com/[\w.-]+/[\w.-]+/pull/\d+$` |
 | `pr_url` | Not already stored — return "already submitted", not a 500 |
 

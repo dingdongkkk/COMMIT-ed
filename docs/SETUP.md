@@ -2,9 +2,8 @@
 
 ## Requirements
 
-`TBD — runtime and version once the stack is picked. e.g. Node 20+, or Python 3.11+`
-
-A database. SQLite is enough — this app handles a few hundred rows.
+Node.js 22.5 or newer — that is the whole list. The app has no npm dependencies; storage is
+SQLite through the built-in `node:sqlite` module.
 
 ## Install
 
@@ -16,38 +15,42 @@ cp .env.example .env
 
 Open `.env` and set `ADMIN_PASSWORD` to something that isn't `change-me`.
 
+No dependencies to install. If you want to double-check your runtime:
+
 ```bash
-# install dependencies — TBD
-# npm install
-# pip install -r requirements.txt
+node -v    # must be >= 22.5.0
 ```
 
 ## Environment variables
 
 | Variable | Required | Notes |
 |---|---|---|
-| `ADMIN_PASSWORD` | yes | Guards `/admin`. No default — the app should refuse to start without it. |
-| `DATABASE_URL` | yes | Connection string, or a SQLite file path |
+| `ADMIN_PASSWORD` | yes | Guards `/admin`. The app refuses to start if it is unset or still `change-me`. |
+| `SESSION_SECRET` | recommended | Signs admin session cookies. Unset means a random secret per boot, so every restart logs admins out. |
+| `DATABASE_URL` | no | SQLite file path. Defaults to `data.db`. |
 | `PORT` | no | Defaults to 3000 |
+| `NODE_ENV` | no | Set to `production` to mark session cookies `Secure` |
 
 `.env` is gitignored. Never commit real values.
 
 ## Database
 
-Create the tables from [SCHEMA.md](SCHEMA.md).
+Tables are created on first connection, so this is only needed to check your setup:
 
 ```bash
-# migration / init command — TBD
+npm run init-db
 ```
 
 ## Run
 
 ```bash
-# dev server — TBD
+npm start        # or: npm run dev, which restarts on file changes
 ```
 
 Then check:
 
+- `http://localhost:3000/` — the landing page renders
+- `http://localhost:3000/badge` — type a GitHub handle, the badge preview updates
 - `http://localhost:3000/submit` — the form renders
 - `http://localhost:3000/leaderboard` — shows an empty state, not an error
 - `http://localhost:3000/admin` — asks for the password
@@ -63,7 +66,12 @@ If those four steps pass, the app is done. That's the entire product.
 
 ## Deploy
 
-`TBD — fill in once you've chosen a host.`
+Any host that runs a Node process and gives you a persistent disk works — a small VPS, Fly,
+Render, Railway. There is no build step: copy the repo, set the environment variables, run
+`node src/server.js` under a process manager (systemd, pm2) behind a TLS-terminating proxy.
+
+Serverless and container platforms with ephemeral filesystems will lose the SQLite file on
+every deploy — mount a volume, or do not use them.
 
 Whatever you pick, before the event starts:
 
@@ -77,15 +85,16 @@ Whatever you pick, before the event starts:
 The database is the whole event record. Back it up daily while the event runs.
 
 ```bash
-# backup command — TBD
-# sqlite3 data.db ".backup 'backup-$(date +%F).db'"
+sqlite3 data.db ".backup 'backup-$(date +%F).db'"
 ```
 
 ## Troubleshooting
 
 | Symptom | Check |
 |---|---|
-| App won't start | Is `ADMIN_PASSWORD` set? Is `DATABASE_URL` reachable? |
+| App won't start | Is `ADMIN_PASSWORD` set to something other than `change-me`? Is Node >= 22.5? |
+| Admins logged out after a restart | `SESSION_SECRET` is unset, so a new one is generated each boot |
+| Badge avatar does not appear | The GitHub username has no account, or the network blocks `avatars.githubusercontent.com` |
 | `/admin` rejects the right password | Environment variable loaded? Restart after editing `.env` |
 | Leaderboard is empty but submissions exist | They're still `pending` — only `approved` rows count |
 | Duplicate submission throws a 500 | The unique constraint on `pr_url` fired; catch it and show a message |
