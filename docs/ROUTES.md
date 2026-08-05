@@ -79,8 +79,8 @@ Clears the session.
 
 No `/api/*`, no JSON endpoints, no GitHub API calls, no webhook receiver, no OAuth
 callback, no user profiles, no teams. Server-rendered pages and form posts are enough.
-The badge is the one piece of client-side JavaScript, and it talks to nothing but the
-public avatar CDN.
+Client-side JavaScript is limited to two files: the badge generator and the presentation
+layer (`fx.js`). Neither talks to anything but the public avatar CDN.
 
 ## Security notes
 

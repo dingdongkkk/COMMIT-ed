@@ -98,7 +98,9 @@ async function serveStatic(res, pathname) {
     const data = await readFile(file);
     send(res, 200, data, {
       'Content-Type': MIME[extname(file)] || 'application/octet-stream',
-      'Cache-Control': 'public, max-age=300',
+      // Revalidate every load: the CSS and badge script are small, and a stale
+      // copy after a deploy is more annoying than the extra request.
+      'Cache-Control': 'no-cache',
     });
     return true;
   } catch {

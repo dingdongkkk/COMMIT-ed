@@ -7,6 +7,10 @@ export function escape(value) {
     .replaceAll("'", '&#39;');
 }
 
+/** Changes on every boot, so a restarted server never serves a page that
+    points at a browser-cached stylesheet or script from the previous build. */
+const V = Date.now().toString(36);
+
 const NAV = [
   ['/', 'Home'],
   ['/badge', 'Badge'],
@@ -21,8 +25,8 @@ export function layout({ title, active, body, head = '', scripts = '' }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escape(title)} · COMMIT-ed</title>
-<link rel="stylesheet" href="/app.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link rel="stylesheet" href="/app.css?v=${V}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕸️</text></svg>">
 ${head}
 </head>
 <body>
@@ -43,10 +47,35 @@ ${body}
   <span>COMMIT-ed · build in public with your campus community</span>
   <a href="/admin">Admin</a>
 </footer>
+<script src="/fx.js?v=${V}" defer></script>
 ${scripts}
 </body>
 </html>`;
 }
+
+/** Hand-drawn corner web, stroke-animated by CSS on load. */
+const CORNER_WEB = `<svg class="corner-web" viewBox="0 0 200 200" aria-hidden="true">
+  <g style="--len:420">
+    <path d="M0 0 L200 60"/><path d="M0 0 L170 120"/><path d="M0 0 L120 170"/>
+    <path d="M0 0 L60 200"/><path d="M0 0 L200 0"/><path d="M0 0 L0 200"/>
+  </g>
+  <g style="--len:300">
+    <path d="M46 0 Q40 40 0 46"/>
+    <path d="M88 0 Q78 78 0 88"/>
+    <path d="M132 0 Q118 118 0 132"/>
+    <path d="M180 0 Q160 160 0 180"/>
+  </g>
+</svg>`;
+
+/** Original spider glyph — body, head and eight legs. */
+const SPIDER = `<svg class="spider" viewBox="0 0 32 32" aria-hidden="true">
+  <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round">
+    <path d="M13 12 L4 6M13 15 L2 14M13 18 L3 22M14 21 L7 28"/>
+    <path d="M19 12 L28 6M19 15 L30 14M19 18 L29 22M18 21 L25 28"/>
+  </g>
+  <ellipse cx="16" cy="18" rx="6" ry="7.5" fill="currentColor"/>
+  <circle cx="16" cy="10" r="4" fill="currentColor"/>
+</svg>`;
 
 function flash(message, kind = 'ok') {
   if (!message) return '';
@@ -59,8 +88,11 @@ export function homePage({ stats }) {
     active: '/',
     body: `
 <section class="hero">
+  ${CORNER_WEB}
+  <span class="web-drop">${SPIDER}</span>
   <div class="hero-copy">
-    <h1><span class="script">COMMIT-ed</span><br>Open Source Season</h1>
+    <h1><span class="script">COMMIT-ed</span><br>
+        <span class="outline" data-split>Open Source Season</span></h1>
     <p>Build in public with your campus community. Grab a contributor badge, ship a pull
        request, and watch the leaderboard move.</p>
     <div class="hero-actions">
@@ -68,47 +100,50 @@ export function homePage({ stats }) {
       <a class="btn ghost" href="/submit">Submit a pull request</a>
     </div>
     <dl class="hero-stats">
-      <div><dt>${stats.participants}</dt><dd>Contributors</dd></div>
-      <div><dt>${stats.approved}</dt><dd>Approved PRs</dd></div>
-      <div><dt>${stats.points}</dt><dd>Points awarded</dd></div>
+      <div><dt data-count="${stats.participants}">${stats.participants}</dt><dd>Contributors</dd></div>
+      <div><dt data-count="${stats.approved}">${stats.approved}</dt><dd>Approved PRs</dd></div>
+      <div><dt data-count="${stats.points}">${stats.points}</dt><dd>Points awarded</dd></div>
     </dl>
   </div>
   <div class="hero-card">
-    <div class="term">
+    <div class="term" data-tilt="7">
       <div class="term-bar"><i></i><i></i><i></i><span>season.ts</span></div>
       <pre><code><span class="k">const</span> season = openSource.<span class="f">start</span>({
   window: <span class="s">'4 weeks'</span>,
   level:  <span class="s">'anyone'</span>,
   review: <span class="s">'by a human'</span>,
-});</code></pre>
-      <div class="term-foot"><span class="pass">badge ready</span><span>leaderboard synced</span></div>
+  motto:  <span class="s">'with great commits…'</span>,
+});
+
+season.<span class="f">on</span>(<span class="s">'pull_request'</span>, () =&gt; <span class="f">thwip</span>());</code></pre>
+      <div class="term-foot"><span class="pass">spider-sense: tingling</span><span>leaderboard synced</span></div>
     </div>
   </div>
 </section>
 
 <section class="cards">
   <article class="card">
-    <span class="tag">Step one</span>
+    <span class="tag">Suit up</span>
     <h2>Get your badge</h2>
     <p>Enter your name and GitHub handle. We render a contributor card you can download and
        post anywhere.</p>
     <a href="/badge">Make my badge →</a>
   </article>
   <article class="card">
-    <span class="tag">Step two</span>
+    <span class="tag">Thwip</span>
     <h2>Submit your PR</h2>
     <p>Paste the link to your pull request. It lands in the review queue as pending.</p>
     <a href="/submit">Submit a link →</a>
   </article>
   <article class="card">
-    <span class="tag">Step three</span>
+    <span class="tag">Spider-sense</span>
     <h2>Reviewed by a human</h2>
     <p>An organiser opens your PR, reads the diff, and types in the points it earned. No bots,
        no auto-scoring.</p>
     <a href="/leaderboard">See the scoring →</a>
   </article>
   <article class="card">
-    <span class="tag">Step four</span>
+    <span class="tag">Swing higher</span>
     <h2>Climb the leaderboard</h2>
     <p>Approved points stack up. Ties break in favour of whoever got there first.</p>
     <a href="/leaderboard">View leaderboard →</a>
@@ -152,10 +187,14 @@ export function badgePage() {
     <label>
       Accent
       <span class="swatches" id="f-accent">
-        <button type="button" class="sw selected" data-accent="#f2547d" style="--sw:#f2547d"></button>
-        <button type="button" class="sw" data-accent="#7c6cff" style="--sw:#7c6cff"></button>
-        <button type="button" class="sw" data-accent="#25c2a0" style="--sw:#25c2a0"></button>
-        <button type="button" class="sw" data-accent="#f2a03d" style="--sw:#f2a03d"></button>
+        <button type="button" class="sw selected" data-accent="#e01b24" style="--sw:#e01b24"
+                title="Web red"></button>
+        <button type="button" class="sw" data-accent="#3d5ce0" style="--sw:#3d5ce0"
+                title="Suit blue"></button>
+        <button type="button" class="sw" data-accent="#ffd23f" style="--sw:#ffd23f"
+                title="Comic gold"></button>
+        <button type="button" class="sw" data-accent="#23d9a0" style="--sw:#23d9a0"
+                title="Symbiote green"></button>
       </span>
     </label>
     <p class="hint" id="badge-hint">The avatar comes straight from your GitHub profile
@@ -167,10 +206,11 @@ export function badgePage() {
   </form>
 
   <div class="badge-preview">
-    <canvas id="badge-canvas" width="1000" height="600" aria-label="Badge preview"></canvas>
+    <canvas id="badge-canvas" width="1000" height="600" data-tilt="10"
+            aria-label="Badge preview"></canvas>
   </div>
 </section>`,
-    scripts: '<script src="/badge.js" defer></script>',
+    scripts: `<script src="/badge.js?v=${V}" defer></script>`,
   });
 }
 
@@ -339,10 +379,10 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
 <section class="narrow">
   ${flash(msg, 'ok')}
   <dl class="admin-stats">
-    <div><dt>${stats.pending}</dt><dd>Pending</dd></div>
-    <div><dt>${stats.approved}</dt><dd>Approved</dd></div>
-    <div><dt>${stats.participants}</dt><dd>Contributors</dd></div>
-    <div><dt>${stats.points}</dt><dd>Points awarded</dd></div>
+    <div><dt data-count="${stats.pending}">${stats.pending}</dt><dd>Pending</dd></div>
+    <div><dt data-count="${stats.approved}">${stats.approved}</dt><dd>Approved</dd></div>
+    <div><dt data-count="${stats.participants}">${stats.participants}</dt><dd>Contributors</dd></div>
+    <div><dt data-count="${stats.points}">${stats.points}</dt><dd>Points awarded</dd></div>
   </dl>
 
   <h2 class="sec">Pending (${pending.length})</h2>

@@ -11,7 +11,7 @@ const roleInput = document.getElementById('f-role');
 const accentBox = document.getElementById('f-accent');
 const hint = document.getElementById('badge-hint');
 
-const state = { name: '', username: '', role: 'Contributor', accent: '#f2547d' };
+const state = { name: '', username: '', role: 'Contributor', accent: '#e01b24' };
 
 /** Avatars are cached per username so typing does not refetch on every keystroke. */
 const avatars = new Map();
@@ -109,67 +109,129 @@ function drawAvatar(cx, cy, r) {
   ctx.stroke();
 }
 
+/** Radial web in a corner: spokes plus catenary-ish cross strands. */
+function drawWeb(cx, cy, radius, rings, spokes, from, to) {
+  const step = (to - from) / spokes;
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = 1.4;
+
+  for (let i = 0; i <= spokes; i += 1) {
+    const a = from + step * i;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius);
+    ctx.stroke();
+  }
+
+  for (let ring = 1; ring <= rings; ring += 1) {
+    const r = (radius / rings) * ring;
+    ctx.beginPath();
+    for (let i = 0; i <= spokes; i += 1) {
+      const a = from + step * i;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        // Sag the strand between spokes so it reads as silk, not a polygon.
+        const mid = a - step / 2;
+        const sag = r * 0.88;
+        ctx.quadraticCurveTo(cx + Math.cos(mid) * sag, cy + Math.sin(mid) * sag, x, y);
+      }
+    }
+    ctx.stroke();
+  }
+}
+
+/** Comic halftone: a soft round cloud of dots, densest at its centre. */
+function drawHalftone(cx, cy, radius, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  for (let i = -radius; i < radius; i += 11) {
+    for (let j = -radius; j < radius; j += 11) {
+      const d = Math.hypot(i, j) / radius;
+      if (d > 1) continue;
+      // Deterministic scatter — a redraw on every keystroke must look identical.
+      const noise = (Math.abs((i * 73856093) ^ (j * 19349663)) % 1000) / 1000;
+      const density = 1 - d;
+      if (noise > density) continue;
+      ctx.globalAlpha = density * 0.45;
+      ctx.beginPath();
+      ctx.arc(cx + i, cy + j, 1.9 * density + 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function draw() {
   const accent = state.accent;
   ctx.clearRect(0, 0, W, H);
 
-  // Card background
+  // Card background — deep comic navy
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#111119');
-  bg.addColorStop(1, '#08080c');
+  bg.addColorStop(0, '#141a3d');
+  bg.addColorStop(0.55, '#0b0f24');
+  bg.addColorStop(1, '#07091a');
   ctx.fillStyle = bg;
-  roundRect(0, 0, W, H, 34);
+  roundRect(0, 0, W, H, 30);
   ctx.fill();
+
+  ctx.save();
+  roundRect(0, 0, W, H, 30);
+  ctx.clip();
 
   // Accent glow, top right
-  const glow = ctx.createRadialGradient(W - 120, -60, 20, W - 120, -60, 520);
-  glow.addColorStop(0, hexToRgba(accent, 0.34));
+  const glow = ctx.createRadialGradient(W - 100, -40, 20, W - 100, -40, 560);
+  glow.addColorStop(0, hexToRgba(accent, 0.42));
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
-  roundRect(0, 0, W, H, 34);
-  ctx.fill();
+  ctx.fillRect(0, 0, W, H);
 
-  // Faint grid
-  ctx.save();
-  roundRect(0, 0, W, H, 34);
-  ctx.clip();
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 40) {
+  // Webs in the top-right and bottom-left corners
+  drawWeb(W, 0, 430, 5, 9, Math.PI * 0.5, Math.PI);
+  drawWeb(0, H, 330, 4, 8, -Math.PI * 0.5, 0);
+
+  // Halftone wash behind the identity block
+  drawHalftone(470, 300, 230, accent);
+
+  // Diagonal speed streaks
+  ctx.strokeStyle = hexToRgba(accent, 0.18);
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 5; i += 1) {
+    const y = 150 + i * 26;
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-    ctx.stroke();
-  }
-  for (let y = 0; y < H; y += 40) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
+    ctx.moveTo(W - 300 + i * 14, y);
+    ctx.lineTo(W - 120 + i * 14, y - 60);
     ctx.stroke();
   }
   ctx.restore();
 
-  // Border
-  roundRect(1.5, 1.5, W - 3, H - 3, 33);
-  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
-  ctx.lineWidth = 3;
+  // Comic ink border, doubled
+  roundRect(2, 2, W - 4, H - 4, 29);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  roundRect(12, 12, W - 24, H - 24, 22);
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 
   // Brand row
-  ctx.fillStyle = '#f4f4f6';
-  ctx.font = `700 30px ${FONT}`;
-  ctx.fillText('COMMIT', 64, 84);
+  ctx.fillStyle = '#f5f6fa';
+  ctx.font = `800 italic 32px ${FONT}`;
+  ctx.fillText('COMMIT', 62, 86);
   const brandW = ctx.measureText('COMMIT').width;
   ctx.fillStyle = accent;
-  ctx.fillText('-ed', 64 + brandW, 84);
+  ctx.fillText('-ed', 62 + brandW, 86);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#8a8a99';
-  ctx.font = `600 15px ${MONO}`;
-  ctx.fillText('OPEN SOURCE SEASON', W - 64, 82);
+  ctx.fillStyle = 'rgba(245,246,250,0.65)';
+  ctx.font = `700 14px ${MONO}`;
+  ctx.fillText('OPEN SOURCE SEASON', W - 62, 84);
   ctx.textAlign = 'left';
 
   // Avatar
@@ -178,45 +240,59 @@ function draw() {
   const r = 96;
   drawAvatar(cx, cy, r);
 
-  // Identity
+  // Identity — comic outline on the name
   const left = 320;
   const name = state.name || 'Your Name';
-  const size = fitText(name, W - left - 70, 58);
+  const size = fitText(name, W - left - 70, 56, '800 italic');
+  ctx.font = `800 italic ${size}px ${FONT}`;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(7,9,26,0.9)';
+  ctx.strokeText(name, left, 300);
   ctx.fillStyle = '#ffffff';
-  ctx.font = `700 ${size}px ${FONT}`;
   ctx.fillText(name, left, 300);
 
-  ctx.fillStyle = '#9a9aa8';
-  ctx.font = `500 24px ${MONO}`;
+  ctx.fillStyle = hexToRgba(accent, 0.95);
+  ctx.font = `600 24px ${MONO}`;
   ctx.fillText(`@${state.username || 'github-handle'}`, left, 344);
 
-  // Role pill
-  ctx.font = `600 18px ${FONT}`;
-  const role = state.role;
-  const pillW = ctx.measureText(role).width + 40;
-  roundRect(left, 372, pillW, 42, 21);
-  ctx.fillStyle = hexToRgba(accent, 0.16);
-  ctx.fill();
-  ctx.strokeStyle = hexToRgba(accent, 0.55);
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  // Role banner — a skewed comic tag rather than a soft pill
+  ctx.font = `800 18px ${FONT}`;
+  const role = state.role.toUpperCase();
+  const tagW = ctx.measureText(role).width + 46;
+  ctx.save();
+  ctx.translate(left, 372);
+  ctx.rotate(-0.035);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(tagW, 0);
+  ctx.lineTo(tagW - 12, 42);
+  ctx.lineTo(0, 42);
+  ctx.closePath();
   ctx.fillStyle = accent;
-  ctx.fillText(role, left + 20, 399);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(7,9,26,0.85)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(role, 22, 28);
+  ctx.restore();
 
   // Footer
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.strokeStyle = hexToRgba(accent, 0.35);
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(64, 496);
-  ctx.lineTo(W - 64, 496);
+  ctx.moveTo(62, 496);
+  ctx.lineTo(W - 62, 496);
   ctx.stroke();
 
-  ctx.fillStyle = '#6f6f7d';
-  ctx.font = `500 16px ${MONO}`;
-  ctx.fillText('build in public with your campus community', 64, 536);
+  ctx.fillStyle = 'rgba(245,246,250,0.5)';
+  ctx.font = `600 15px ${MONO}`;
+  ctx.fillText('with great commits comes great responsibility', 62, 536);
   ctx.textAlign = 'right';
   ctx.fillStyle = accent;
-  ctx.fillText('#COMMITed', W - 64, 536);
+  ctx.font = `800 16px ${MONO}`;
+  ctx.fillText('#COMMITed', W - 62, 536);
   ctx.textAlign = 'left';
 }
 

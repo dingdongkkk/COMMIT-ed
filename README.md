@@ -51,9 +51,21 @@ src/
   validate.js   input rules
   views.js      HTML templates
 public/
-  app.css       styles
+  app.css       styles — comic web-slinger theme, all animation/hover states
+  fx.js         motion layer — scroll reveals, count-ups, cursor reticle, tilt
   badge.js      canvas badge generator
 ```
+
+## Look and feel
+
+Comic-book web-slinger: red and blue palette, halftone dots, web patterns and panel
+borders. Every graphic is original CSS or hand-written SVG drawn in this repo — no
+third-party logos, character art or fonts, and no external requests beyond GitHub avatars.
+
+Motion is handled in [public/fx.js](public/fx.js): scroll reveals, an animated hero title,
+stat count-ups, a web-line "thwip" on click, a trailing cursor reticle, and pointer tilt on
+the badge preview. Anything already on screen at load skips its reveal, and the whole motion
+layer switches itself off under `prefers-reduced-motion`.
 
 ## Docs
 
