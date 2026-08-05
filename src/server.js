@@ -243,12 +243,26 @@ async function handleReview(req, res, id) {
     points = parsed.value;
   }
 
-  const ok = reviewSubmission(db, id, {
+  const outcome = reviewSubmission(db, id, {
     status: action === 'approve' ? 'approved' : 'rejected',
     points,
     note,
   });
-  if (!ok) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  if (outcome === 'missing') {
+    return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  }
+  if (outcome === 'already') {
+    return send(
+      res,
+      409,
+      errorPage(
+        409,
+        'Another organiser already reviewed this pull request. Your score was not ' +
+          'applied — reload the queue to see what they gave it.',
+        '/admin',
+      ),
+    );
+  }
   redirect(res, '/admin');
 }
 

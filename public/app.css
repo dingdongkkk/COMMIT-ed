@@ -444,10 +444,10 @@ main {
   animation: draw 2.4s var(--ease-out) forwards;
 }
 
-/* Terminal card — a lit screen against the pink sky. */
+/* Terminal card — suit blue, so the black web and spider read against it. */
 .term {
   position: relative;
-  background: #17101c;
+  background: linear-gradient(180deg, #22337d, #16234f);
   border: 3px solid var(--ink);
   border-radius: 14px;
   overflow: hidden;
@@ -469,23 +469,23 @@ main {
   gap: 7px;
   padding: 11px 14px;
   border-bottom: 2px solid rgba(255, 255, 255, 0.16);
-  background: #241830;
+  background: #2c3f92;
 }
-.term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #4b3a55; transition: transform 0.3s var(--ease-snap); }
+.term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #5468bd; transition: transform 0.3s var(--ease-snap); }
 .term-bar i:first-child { background: var(--red); }
 .term-bar i:nth-child(2) { background: var(--yellow); }
 .term-bar i:nth-child(3) { background: #2ee0ae; }
 .term:hover .term-bar i { transform: scale(1.25); }
-.term-bar span { margin-left: 10px; color: #c9b6d4; font-size: 12px; }
+.term-bar span { margin-left: 10px; color: #bcc9f2; font-size: 12px; }
 .term pre {
   margin: 0;
   padding: 22px;
   font: 13px/1.85 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: #f0e4f5;
+  color: #eef2ff;
   overflow-x: auto;
 }
-.term .k { color: #ff6f9c; }
-.term .f { color: #7fb6ff; }
+.term .k { color: #ff87b5; }
+.term .f { color: #6fe0ff; }
 .term .s { color: var(--yellow); }
 .term-foot {
   display: flex;
@@ -493,9 +493,9 @@ main {
   padding: 12px 16px;
   border-top: 2px solid rgba(255, 255, 255, 0.16);
   font: 12px ui-monospace, monospace;
-  color: #c9b6d4;
+  color: #bcc9f2;
 }
-.term-foot .pass { color: #38e8b4; animation: flicker 3s ease-in-out infinite; }
+.term-foot .pass { color: #4bf0c0; animation: flicker 3s ease-in-out infinite; }
 
 /* ---------- comic panel cards ---------- */
 

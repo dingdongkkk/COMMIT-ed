@@ -106,15 +106,23 @@ export function submissionsByStatus(db, status) {
     .all(status);
 }
 
+/**
+ * Returns 'reviewed', 'already' (someone else got there first) or 'missing'.
+ * The status guard is what stops two organisers with stale queues from
+ * silently overwriting each other's scores.
+ */
 export function reviewSubmission(db, id, { status, points, note }) {
   const info = db
     .prepare(
       `UPDATE submissions
        SET status = ?, points = ?, note = ?, reviewed_at = datetime('now')
-       WHERE id = ?`,
+       WHERE id = ? AND status = 'pending'`,
     )
     .run(status, points, note || null, id);
-  return info.changes > 0;
+  if (info.changes > 0) return 'reviewed';
+
+  const row = db.prepare('SELECT status FROM submissions WHERE id = ?').get(id);
+  return row ? 'already' : 'missing';
 }
 
 export function stats(db) {
