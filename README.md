@@ -21,7 +21,7 @@ the scoring rules are yours to decide, kept outside this repo.
 
 ## Stack
 
-Node.js (22.5+) and nothing else — **zero dependencies**.
+Node.js 24+ and nothing else — **zero dependencies**.
 
 - `node:http` for the server, hand-rolled router, server-rendered HTML
 - `node:sqlite` for storage

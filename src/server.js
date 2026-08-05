@@ -48,13 +48,25 @@ if (!ADMIN_PASSWORD || ADMIN_PASSWORD === 'change-me') {
   process.exit(1);
 }
 
+if (!process.env.SESSION_SECRET) {
+  console.warn(
+    'SESSION_SECRET is unset — a random one is generated per boot, so every ' +
+      'restart signs admins out. Set it before the event.',
+  );
+}
+
 const PORT = Number(process.env.PORT) || 3000;
 const SECURE_COOKIES = process.env.NODE_ENV === 'production';
+if (SECURE_COOKIES) {
+  console.log('NODE_ENV=production: session cookies are Secure, so /admin needs HTTPS.');
+}
 const PUBLIC_DIR = fileURLToPath(new URL('../public', import.meta.url));
 
 const db = openDb();
-const submitLimit = rateLimiter({ windowMs: 60_000, max: 10 });
-const loginLimit = rateLimiter({ windowMs: 15 * 60_000, max: 10 });
+// A whole campus can share one public IP, so these are per-IP burst guards,
+// not per-person quotas. Login only spends budget on a wrong password.
+const submitLimit = rateLimiter({ windowMs: 60_000, max: 60 });
+const loginFailures = rateLimiter({ windowMs: 15 * 60_000, max: 25 });
 
 const MIME = {
   '.css': 'text/css; charset=utf-8',
@@ -168,14 +180,14 @@ const routes = {
     send(res, 200, adminLoginPage({ csrf: csrfToken(req) })),
 
   'POST /admin/login': async (req, res) => {
-    if (!loginLimit(clientIp(req))) {
-      return send(res, 429, errorPage(429, 'Too many login attempts. Try again later.'));
-    }
     const form = await readBody(req);
     if (!csrfValid(req, form.get('csrf'))) {
       return send(res, 403, adminLoginPage({ csrf: csrfToken(req), error: 'Session expired, try again.' }));
     }
     if (!constantTimeEqual(form.get('password') || '', ADMIN_PASSWORD)) {
+      if (!loginFailures(clientIp(req))) {
+        return send(res, 429, errorPage(429, 'Too many wrong passwords. Try again later.'));
+      }
       return send(
         res,
         401,
@@ -214,12 +226,12 @@ async function handleReview(req, res, id) {
   if (!requireAdmin(req, res)) return;
   const form = await readBody(req);
   if (!csrfValid(req, form.get('csrf'))) {
-    return send(res, 403, errorPage(403, 'Bad CSRF token. Reload the admin page.'));
+    return send(res, 403, errorPage(403, 'Bad CSRF token. Reload the admin page.', '/admin'));
   }
 
   const action = form.get('action');
   if (action !== 'approve' && action !== 'reject') {
-    return send(res, 400, errorPage(400, 'Unknown action.'));
+    return send(res, 400, errorPage(400, 'Unknown action.', '/admin'));
   }
 
   const note = String(form.get('note') || '').trim().slice(0, 300);
@@ -227,7 +239,7 @@ async function handleReview(req, res, id) {
   let points = 0;
   if (action === 'approve') {
     const parsed = validatePoints(form.get('points'));
-    if (parsed.error) return send(res, 400, errorPage(400, parsed.error));
+    if (parsed.error) return send(res, 400, errorPage(400, parsed.error, '/admin'));
     points = parsed.value;
   }
 
@@ -236,7 +248,7 @@ async function handleReview(req, res, id) {
     points,
     note,
   });
-  if (!ok) return send(res, 404, errorPage(404, 'Submission not found.'));
+  if (!ok) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
   redirect(res, '/admin');
 }
 

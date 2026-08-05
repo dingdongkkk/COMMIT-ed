@@ -476,11 +476,13 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
   });
 }
 
-export function errorPage(status, message) {
+export function errorPage(status, message, back = '/') {
+  const label = back === '/admin' ? 'Back to the review queue' : 'Back home';
   return layout({
     title: `${status}`,
     active: '',
     body: `<section class="page-head"><h1>${status}</h1><p>${escape(message)}</p>
-      <p><a class="btn ghost" href="/">Back home</a></p></section>`,
+      <p style="margin-top:22px"><a class="btn primary" href="${escape(back)}">${label}</a></p>
+      </section>`,
   });
 }

@@ -2,8 +2,9 @@
 
 ## Requirements
 
-Node.js 22.5 or newer — that is the whole list. The app has no npm dependencies; storage is
-SQLite through the built-in `node:sqlite` module.
+Node.js 24 or newer — that is the whole list. The app has no npm dependencies; storage is
+SQLite through the built-in `node:sqlite` module, which needs the `--experimental-sqlite`
+flag on Node 22 and 23. Deploy on 24+ and the question never comes up.
 
 ## Install
 
@@ -18,7 +19,7 @@ Open `.env` and set `ADMIN_PASSWORD` to something that isn't `change-me`.
 No dependencies to install. If you want to double-check your runtime:
 
 ```bash
-node -v    # must be >= 22.5.0
+node -v    # must be >= 24
 ```
 
 ## Environment variables
