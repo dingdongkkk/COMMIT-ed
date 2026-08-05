@@ -165,11 +165,6 @@ export function homePage({ stats }) {
       <a class="btn primary" href="/badge">Generate my badge</a>
       <a class="btn ghost" href="/submit">Submit a pull request</a>
     </div>
-    <dl class="hero-stats">
-      <div><dt data-count="${stats.participants}">${stats.participants}</dt><dd>Contributors</dd></div>
-      <div><dt data-count="${stats.approved}">${stats.approved}</dt><dd>Approved PRs</dd></div>
-      <div><dt data-count="${stats.points}">${stats.points}</dt><dd>Points awarded</dd></div>
-    </dl>
   </div>
   <div class="hero-card hang">
     <span class="hang-line">${SPIDER}</span>

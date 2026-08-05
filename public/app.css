@@ -288,7 +288,7 @@ main {
   grid-template-columns: 1.05fr 1fr;
   gap: 48px;
   align-items: center;
-  padding: 52px 0 clamp(215px, 28vw, 450px);
+  padding: 52px 0 clamp(150px, 26vw, 420px);
 }
 .hero-copy, .hero-card { position: relative; z-index: 2; }
 
@@ -356,26 +356,15 @@ main {
 }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin: 28px 0 36px; }
 
-.hero-stats, .admin-stats { display: flex; gap: 40px; margin: 0; flex-wrap: wrap; }
-.hero-stats dt, .admin-stats dt {
+.admin-stats { display: flex; gap: 40px; margin: 0; flex-wrap: wrap; }
+.admin-stats dt {
   font-size: 36px;
   font-weight: 900;
   font-style: italic;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.hero-stats dt { text-shadow: 3px 3px 0 var(--pink-3); }
-.hero-stats > div { position: relative; padding-left: 16px; }
-.hero-stats > div::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 22px;
-  width: 4px;
-  background: var(--red);
-}
-.hero-stats dd, .admin-stats dd {
+.admin-stats dd {
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 11px;
@@ -994,7 +983,7 @@ input:focus, select:focus {
 
 @media (max-width: 860px) {
   .hero, .badge-layout { grid-template-columns: 1fr; }
-  .hero { padding-bottom: clamp(170px, 46vw, 300px); }
+  .hero { padding-bottom: clamp(150px, 42vw, 260px); }
   /* Zoom the city in so the towers still read at phone widths. */
   .skyline { width: 170vw; }
   .site-head { flex-wrap: wrap; gap: 12px; }
