@@ -30,10 +30,11 @@ can revoke an approved score at any time, and reinstate it later.
 
 ## Stack
 
-Node.js 24+ and nothing else — **zero dependencies**.
+Node.js 20+ and one dependency.
 
 - `node:http` for the server, hand-rolled router, server-rendered HTML
-- `node:sqlite` for storage
+- [`@libsql/client`](https://github.com/tursodatabase/libsql-client-ts) for storage — a
+  local SQLite file in development, [Turso](https://turso.tech) in production
 - `node:crypto` for signed session cookies and CSRF tokens
 - One GitHub API call per submission, to read the pull request's labels
 - The badge is drawn client-side on a `<canvas>`; the avatar comes from
@@ -44,6 +45,7 @@ Node.js 24+ and nothing else — **zero dependencies**.
 ```bash
 git clone https://github.com/ORG/COMMIT-ed.git
 cd COMMIT-ed
+npm install
 cp .env.example .env    # set ADMIN_PASSWORD, SESSION_SECRET and GITHUB_TOKEN
 npm run init-db
 npm start               # http://localhost:3000
@@ -57,8 +59,11 @@ npm start               # http://localhost:3000
 ## Layout
 
 ```
+api/
+  index.js      Vercel entry point — hands the request to the same router
 src/
-  server.js     routing, request handling
+  app.js        routing and request handling
+  server.js     local/container listener
   github.js     the one call out: reading a pull request's labels
   points.js     the label → points table and how labels are matched
   db.js         schema + every query
@@ -89,12 +94,12 @@ accent, webbing colour and card tones.
 
 ## Deploy
 
-Needs a host that runs a persistent process with a disk — Railway, Fly.io or a VPS. There's
-a Dockerfile at the root; step-by-step for each host is in [docs/DEPLOY.md](docs/DEPLOY.md).
+**Vercel + Turso, free**, is the recommended path — step by step in
+[docs/DEPLOY.md](docs/DEPLOY.md). Vercel serves the app, Turso holds the database.
 
-**Serverless hosts do not work.** On Vercel or Netlify Functions there is no process to keep
-listening and no writable disk, so the app crashes on invocation and any data it did write
-would vanish.
+The same code also runs as an ordinary long-lived process behind the
+[Dockerfile](Dockerfile) — Railway, Fly.io or any VPS — if you would rather own the
+server and keep the database on a disk.
 
 ## Docs
 

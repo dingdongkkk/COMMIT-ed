@@ -2,9 +2,8 @@
 
 ## Requirements
 
-Node.js 24 or newer — that is the whole list. The app has no npm dependencies; storage is
-SQLite through the built-in `node:sqlite` module, which needs the `--experimental-sqlite`
-flag on Node 22 and 23. Deploy on 24+ and the question never comes up.
+Node.js 20 or newer, and one npm dependency (`@libsql/client`). Storage is libSQL: a local
+SQLite file while you develop, Turso once deployed.
 
 ## Install
 
@@ -16,10 +15,9 @@ cp .env.example .env
 
 Open `.env` and set `ADMIN_PASSWORD` to something that isn't `change-me`.
 
-No dependencies to install. If you want to double-check your runtime:
-
 ```bash
-node -v    # must be >= 24
+npm install
+node -v    # must be >= 20
 ```
 
 ## Environment variables
@@ -29,7 +27,8 @@ node -v    # must be >= 24
 | `ADMIN_PASSWORD` | yes | Guards `/admin`. The app refuses to start if it is unset or still `change-me`. |
 | `SESSION_SECRET` | recommended | Signs admin session cookies. Unset means a random secret per boot, so every restart logs admins out. |
 | `GITHUB_TOKEN` | strongly recommended | Reads PR labels. Unset, the whole server shares 60 lookups/hour; with a token, 5000. A classic token with no scopes works for public repos. |
-| `DATABASE_URL` | no | SQLite file path. Defaults to `data.db`. |
+| `TURSO_DATABASE_URL` | no | `file:data.db` locally, `libsql://…` in production. Defaults to `file:data.db`. |
+| `TURSO_AUTH_TOKEN` | production only | Turso token; not needed for a local file. |
 | `PORT` | no | Defaults to 3000 |
 | `NODE_ENV` | no | Set to `production` to mark session cookies `Secure` |
 

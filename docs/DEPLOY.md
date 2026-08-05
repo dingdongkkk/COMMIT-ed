@@ -1,43 +1,74 @@
 # Deploy
 
-The app is a single long-running Node process with a SQLite file next to it. It needs a
-host that gives you **a process that stays up** and **a disk that survives restarts**.
+The recommended host is **Vercel + Turso**, which is free and needs no card. Vercel runs
+the app; Turso holds the database, because Vercel's own filesystem is wiped between
+requests.
 
-Serverless platforms — Vercel, Netlify Functions, Cloudflare Workers — provide neither.
-Vercel in particular will fail with `FUNCTION_INVOCATION_FAILED`: there is no handler to
-invoke, and the filesystem is read-only. Don't spend time on it.
+The same code also runs as a normal long-lived process — see [Railway](#railway),
+[Fly.io](#flyio) or [a plain VPS](#a-plain-vps) further down, and the [Dockerfile](../Dockerfile).
 
-There's a [Dockerfile](../Dockerfile) at the root. Everything below uses it.
+## Vercel + Turso (free)
 
-## What every host needs
+### 1. Create the database
 
-| Setting | Value |
+1. Sign up at [turso.tech](https://turso.tech) with GitHub — the free plan is plenty for an
+   event and asks for no card.
+2. Create a database (any name, pick the region closest to you).
+3. From its dashboard copy two things:
+   - the **database URL**, which looks like `libsql://commit-ed-you.turso.io`
+   - a **token**, from *Create Token* (read & write)
+
+### 2. Import the repo to Vercel
+
+1. [vercel.com](https://vercel.com) → **Add New** → **Project** → import `COMMIT-ed`.
+2. Framework preset: **Other**. Leave the build and output settings empty — there is no
+   build step.
+3. Before clicking Deploy, open **Environment Variables** and add five:
+
+| Name | Value |
 |---|---|
-| Port | Read from `PORT`, defaults to 3000 — most hosts inject this |
-| Volume mount | `/data` — the image already points `DATABASE_URL` at `/data/data.db` |
-| Health check | `GET /healthz` returns `ok <participant count>` |
-
-Environment variables to set in the host's dashboard (never in a file — `.env` is
-gitignored and is not deployed):
-
-| Variable | Notes |
-|---|---|
-| `ADMIN_PASSWORD` | Required. The app refuses to start without it. |
-| `SESSION_SECRET` | Any long random string. Without it, every restart signs admins out. |
-| `GITHUB_TOKEN` | Lifts PR label lookups from 60/hour to 5000. |
-
-`NODE_ENV=production` is already set in the image, which marks session cookies `Secure`.
-Every host below terminates HTTPS for you, so that is what you want.
-
-Generate a session secret with:
+| `TURSO_DATABASE_URL` | the `libsql://…` URL from step 1 |
+| `TURSO_AUTH_TOKEN` | the token from step 1 |
+| `ADMIN_PASSWORD` | your admin password |
+| `SESSION_SECRET` | output of the command below |
+| `GITHUB_TOKEN` | your GitHub token, for reading PR labels |
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
+`SESSION_SECRET` is not optional here. Vercel runs many instances of the function, and
+without a shared secret each one signs cookies differently — admins would be logged out at
+random. The app refuses to start in production without it, on purpose.
+
+4. **Deploy.**
+
+### 3. Check it
+
+- `https://your-app.vercel.app/healthz` → `ok 0`
+- Submit a PR link, log into `/admin`, approve it, watch `/leaderboard`
+- Redeploy, then reload the leaderboard — the entry must still be there. That proves the
+  database is Turso and not something ephemeral.
+
+### How the pieces fit
+
+- `public/` is served by Vercel's CDN as static files, so CSS and JS never wake the function
+- everything else is rewritten to [`api/index.js`](../api/index.js), which calls the same
+  router the local server uses — one code path, not two
+- the tables are created on first connection, so there is no migration step
+
+### Two things to know about serverless
+
+- **Rate limiting is weaker.** The submit and login limits are in-process, and Vercel may
+  run several processes, so the effective limit is higher than the configured one. Fine for
+  an event; it is not a defence against a determined attacker.
+- **Cold starts.** The first request after a quiet spell takes an extra moment while the
+  function boots and connects to Turso. Subsequent requests are fast.
+
 ## Railway
 
-Easiest of the three — all dashboard, no CLI.
+Paid (about $5/month for an always-on service with a volume), but zero code changes and no
+external database — the app writes to a disk you mount.
 
 1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** →
    pick `COMMIT-ed`. It finds the Dockerfile on its own.
@@ -67,7 +98,7 @@ Most control, and the cheapest if you already have a box.
 
 ```bash
 git clone https://github.com/ORG/COMMIT-ed.git /srv/commit-ed
-cd /srv/commit-ed && node -v      # must be 24+
+cd /srv/commit-ed && npm install && node -v   # must be 20+
 ```
 
 Create `/etc/systemd/system/commit-ed.service`:
@@ -82,7 +113,7 @@ WorkingDirectory=/srv/commit-ed
 ExecStart=/usr/bin/node src/server.js
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=DATABASE_URL=/srv/commit-ed/data.db
+Environment=TURSO_DATABASE_URL=file:/srv/commit-ed/data.db
 Environment=ADMIN_PASSWORD=change-me
 Environment=SESSION_SECRET=change-me
 Environment=GITHUB_TOKEN=
@@ -107,7 +138,7 @@ cookies will not be sent over plain HTTP on a real domain.
 - [ ] `/admin` login works **on the deployed HTTPS URL**, not just locally
 - [ ] Approve one submission and confirm it lands on `/leaderboard`
 - [ ] Redeploy once, then check the leaderboard still has that entry — this is the test
-      that proves your volume is real
+      that proves your database really persists
 - [ ] `GITHUB_TOKEN` set, or every PR scores 0 once the hourly limit runs out
 
 ## Backups

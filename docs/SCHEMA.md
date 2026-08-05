@@ -1,6 +1,7 @@
 # Schema
 
-Two tables. Illustrative SQL — adapt to your stack.
+Two tables, created automatically on first connection. The engine is libSQL: a local
+SQLite file in development, Turso in production — same SQL either way.
 
 ## `participants`
 
