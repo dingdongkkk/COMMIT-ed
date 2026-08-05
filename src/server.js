@@ -9,6 +9,7 @@ import {
   openDb,
   findOrCreateParticipant,
   insertSubmission,
+  adjustSubmission,
   leaderboard,
   submissionsByStatus,
   reviewSubmission,
@@ -266,6 +267,44 @@ async function handleReview(req, res, id) {
   redirect(res, '/admin');
 }
 
+async function handleAdjust(req, res, id) {
+  if (!requireAdmin(req, res)) return;
+  const form = await readBody(req);
+  if (!csrfValid(req, form.get('csrf'))) {
+    return send(res, 403, errorPage(403, 'Bad CSRF token. Reload the admin page.', '/admin'));
+  }
+
+  const action = form.get('action');
+  if (action !== 'update' && action !== 'revoke') {
+    return send(res, 400, errorPage(400, 'Unknown action.', '/admin'));
+  }
+
+  const note = String(form.get('note') || '').trim().slice(0, 300);
+  let points = 0;
+  if (action === 'update') {
+    const parsed = validatePoints(form.get('points'));
+    if (parsed.error) return send(res, 400, errorPage(400, parsed.error, '/admin'));
+    points = parsed.value;
+  }
+
+  const outcome = adjustSubmission(db, id, {
+    status: action === 'update' ? 'approved' : 'rejected',
+    points,
+    note,
+  });
+  if (outcome === 'missing') {
+    return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  }
+  if (outcome === 'pending') {
+    return send(
+      res,
+      409,
+      errorPage(409, 'That pull request is still pending — score it in the queue above.', '/admin'),
+    );
+  }
+  redirect(res, '/admin');
+}
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -275,9 +314,12 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    const review = pathname.match(/^\/admin\/submissions\/(\d+)\/review$/);
-    if (review && req.method === 'POST') {
-      return await handleReview(req, res, Number(review[1]));
+    const action = pathname.match(/^\/admin\/submissions\/(\d+)\/(review|adjust)$/);
+    if (action && req.method === 'POST') {
+      const id = Number(action[1]);
+      return action[2] === 'review'
+        ? await handleReview(req, res, id)
+        : await handleAdjust(req, res, id);
     }
 
     const handler = routes[`${req.method} ${pathname}`];

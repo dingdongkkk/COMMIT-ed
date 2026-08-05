@@ -69,7 +69,7 @@ stat count-ups, skyline parallax, and a web-line "thwip" on click. Anything alre
 screen at load skips its reveal, and the whole motion layer switches itself off under
 `prefers-reduced-motion`.
 
-The badge offers four suit themes — Gwen, Miles, Pavitr and Classic — each with its own
+The badge offers four suit themes — Gwen, Miles, Pavitr and Peter — each with its own
 accent, webbing colour and card tones.
 
 ## Docs

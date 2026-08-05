@@ -68,7 +68,21 @@ One endpoint, two buttons — the `action` field is `approve` or `reject`.
 - `reject` — sets `status = 'rejected'`, forces `points` to 0 whatever is in the box, and
   stores the note if given
 
-Below the queue the page also lists everything already reviewed, so a mis-scored PR is easy
+A review only applies to a `pending` row. If another organiser got there first, the second
+one gets a 409 saying so and their score is not applied — two people working from stale
+queues can never overwrite each other.
+
+### `POST /admin/submissions/:id/adjust`
+
+Correcting a row that has already been reviewed, from the inline controls in the reviewed
+table. `action` is `update` (set a new points value, keeping it approved) or `revoke`
+(status back to `rejected`, points to 0). Scores can be raised or lowered here at any time,
+with an optional note explaining why.
+
+This route never touches a `pending` row, and `review` never touches a reviewed one — so
+the correction path can't be used to award a fresh pull request twice.
+
+Below the queue the page lists everything already reviewed, so a mis-scored PR is easy
 to spot.
 
 ### `POST /admin/logout`

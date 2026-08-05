@@ -262,10 +262,10 @@ export function badgePage() {
                 data-accent="#ffb020" data-secondary="#29c4c4"
                 data-bg1="#23163d" data-bg2="#0e0820"
                 style="--sw:#ffb020; --sw2:#29c4c4"><span>Pavitr</span></button>
-        <button type="button" class="sw" title="Classic Spider-Man"
+        <button type="button" class="sw" title="Peter Parker"
                 data-accent="#e01b24" data-secondary="#3d5ce0"
                 data-bg1="#141a3d" data-bg2="#07091a"
-                style="--sw:#e01b24; --sw2:#3d5ce0"><span>Classic</span></button>
+                style="--sw:#e01b24; --sw2:#3d5ce0"><span>Peter</span></button>
       </span>
     </label>
     <p class="hint" id="badge-hint">The avatar comes straight from your GitHub profile
@@ -417,7 +417,7 @@ function submissionRow(s, csrf) {
 </form>`;
 }
 
-function reviewedRow(s) {
+function reviewedRow(s, csrf) {
   return `<tr class="st-${escape(s.status)}">
   <td><a href="https://github.com/${escape(s.github_username)}" target="_blank"
          rel="noopener noreferrer">@${escape(s.github_username)}</a></td>
@@ -425,8 +425,17 @@ function reviewedRow(s) {
     s.pr_url.replace('https://github.com/', ''),
   )}</a></td>
   <td><span class="pill ${escape(s.status)}">${escape(s.status)}</span></td>
-  <td class="pts">${s.points}</td>
-  <td class="note">${escape(s.note)}</td>
+  <td class="adjust">
+    <form method="post" action="/admin/submissions/${s.id}/adjust">
+      <input type="hidden" name="csrf" value="${escape(csrf)}">
+      <input class="pts-in" name="points" type="number" min="0" max="1000" step="1"
+             value="${s.points}" aria-label="Points for @${escape(s.github_username)}">
+      <input class="note-in" name="note" maxlength="300" value="${escape(s.note)}"
+             placeholder="Reason for the change…">
+      <button class="btn small" name="action" value="update" type="submit">Save</button>
+      <button class="btn small danger" name="action" value="revoke" type="submit">Revoke</button>
+    </form>
+  </td>
 </tr>`;
 }
 
@@ -464,12 +473,14 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
   }
 
   <h2 class="sec">Reviewed (${reviewed.length})</h2>
+  <p class="hint" style="margin:-6px 0 14px">Scores can be raised, lowered or revoked here
+     at any point — the leaderboard updates immediately.</p>
   ${
     reviewed.length === 0
       ? '<p class="empty">Nothing reviewed yet.</p>'
       : `<table class="board reviewed">
-    <thead><tr><th>Who</th><th>PR</th><th>Status</th><th>Points</th><th>Note</th></tr></thead>
-    <tbody>${reviewed.map(reviewedRow).join('\n')}</tbody>
+    <thead><tr><th>Who</th><th>PR</th><th>Status</th><th>Points &amp; note — change any time</th></tr></thead>
+    <tbody>${reviewed.map((s) => reviewedRow(s, csrf)).join('\n')}</tbody>
   </table>`
   }
 </section>`,

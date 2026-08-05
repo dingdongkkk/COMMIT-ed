@@ -125,6 +125,27 @@ export function reviewSubmission(db, id, { status, points, note }) {
   return row ? 'already' : 'missing';
 }
 
+/**
+ * Correcting a row that has already been reviewed — raising, lowering or
+ * revoking a score after the fact. Deliberately the mirror of
+ * reviewSubmission: that one only touches pending rows, this one never does,
+ * so a correction can't be used to sneak a second award onto a fresh PR.
+ * Returns 'adjusted', 'pending' (use the queue instead) or 'missing'.
+ */
+export function adjustSubmission(db, id, { status, points, note }) {
+  const info = db
+    .prepare(
+      `UPDATE submissions
+       SET status = ?, points = ?, note = ?, reviewed_at = datetime('now')
+       WHERE id = ? AND status != 'pending'`,
+    )
+    .run(status, points, note || null, id);
+  if (info.changes > 0) return 'adjusted';
+
+  const row = db.prepare('SELECT status FROM submissions WHERE id = ?').get(id);
+  return row ? 'pending' : 'missing';
+}
+
 export function stats(db) {
   const row = db
     .prepare(

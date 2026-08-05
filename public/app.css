@@ -32,7 +32,7 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -423,14 +423,17 @@ main {
     sway 7s ease-in-out 2.4s infinite;
 }
 
-/* Corner web in the hero, stroke-drawn on load. */
+/* Corner web in the hero, stroke-drawn on load. Its strands radiate from the
+   SVG's own top-left corner, so pinning that corner to the viewport edge —
+   whatever the content column is doing — makes the web start at the screen
+   edge on every width. */
 .corner-web {
   position: absolute;
-  /* Pulled up through the hero and main padding so the web meets the navbar. */
   top: -96px;
-  left: -80px;
-  width: 300px;
-  height: 300px;
+  left: 50%;
+  transform: translateX(-50vw);
+  width: clamp(190px, 24vw, 320px);
+  height: auto;
   opacity: 0.7;
   pointer-events: none;
   z-index: 1;
@@ -827,6 +830,16 @@ input:focus, select:focus {
 .sw.selected { color: var(--ink); }
 .sw.selected::before { box-shadow: 0 0 0 3px var(--yellow), 4px 4px 0 var(--ink); }
 
+/* Compact buttons for the inline correction controls. */
+.btn.small {
+  padding: 7px 14px;
+  font-size: 12px;
+  border-width: 2.5px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.btn.small:hover { box-shadow: 5px 6px 0 var(--ink); }
+.btn.small:active { box-shadow: 1px 1px 0 var(--ink); }
+
 /* ---------- tables ---------- */
 
 .board {
@@ -853,7 +866,8 @@ input:focus, select:focus {
 .board td { padding: 14px; border-bottom: 2px solid rgba(21, 10, 18, 0.12); vertical-align: middle; }
 .board tbody tr:last-child td { border-bottom: 0; }
 .board tbody tr { transition: background 0.3s, transform 0.3s var(--ease-out); }
-.board tbody tr:hover { background: var(--pink-pale); transform: translateX(6px); }
+.board tbody tr:hover { background: var(--pink-pale); }
+.board:not(.reviewed) tbody tr:hover { transform: translateX(6px); }
 .board .rank {
   font-weight: 900;
   font-style: italic;
@@ -905,6 +919,19 @@ input:focus, select:focus {
 .board tbody tr:hover .pill { transform: scale(1.08); }
 .pill.approved { background: #c9f7e5; color: #0c5c45; }
 .pill.rejected { background: #ffd9df; color: #8e0f22; }
+
+/* Correcting a score after the fact, inline in the reviewed table. */
+.board .adjust form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.board .adjust input { font-size: 14px; padding: 8px 10px; }
+.board .adjust .pts-in { width: 84px; flex: none; }
+.board .adjust .note-in { flex: 1; min-width: 130px; width: auto; }
+.board tbody tr:hover { transform: none; }
+.board tbody tr:hover .rank { transform: scale(1.3); }
 
 /* ---------- admin ---------- */
 
@@ -990,7 +1017,7 @@ input:focus, select:focus {
   .site-head { flex-wrap: wrap; gap: 12px; }
   .site-head nav { order: 3; width: 100%; margin-left: 0; }
   .board .pr, .board .note { display: none; }
-  .corner-web { display: none; }
+  .corner-web { top: -84px; opacity: 0.55; }
   .hang-line { height: 150px; }
   /* The poster shadow has to shrink with the type, or lines collide. */
   .hero h1 { line-height: 1.06; }
