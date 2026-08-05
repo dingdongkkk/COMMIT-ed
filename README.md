@@ -87,8 +87,18 @@ screen at load skips its reveal, and the whole motion layer switches itself off 
 The badge offers four suit themes — Gwen, Miles, Pavitr and Peter — each with its own
 accent, webbing colour and card tones.
 
+## Deploy
+
+Needs a host that runs a persistent process with a disk — Railway, Fly.io or a VPS. There's
+a Dockerfile at the root; step-by-step for each host is in [docs/DEPLOY.md](docs/DEPLOY.md).
+
+**Serverless hosts do not work.** On Vercel or Netlify Functions there is no process to keep
+listening and no writable disk, so the app crashes on invocation and any data it did write
+would vanish.
+
 ## Docs
 
+- [docs/DEPLOY.md](docs/DEPLOY.md) — Dockerfile, Railway, Fly.io, VPS, backups
 - [docs/SETUP.md](docs/SETUP.md) — install, environment variables, running, deploying
 - [docs/SCHEMA.md](docs/SCHEMA.md) — two tables, validation rules, the leaderboard query
 - [docs/ROUTES.md](docs/ROUTES.md) — every endpoint the app needs

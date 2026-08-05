@@ -1,0 +1,11 @@
+.git
+.github
+.claude
+node_modules
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+docs
+*.md

@@ -137,6 +137,12 @@ function requireAdmin(req, res) {
 const routes = {
   'GET /': (req, res) => send(res, 200, homePage({ stats: stats(db) })),
   'GET /badge': (req, res) => send(res, 200, badgePage()),
+
+  // Health check for the host: proves the process is up and the database reads.
+  'GET /healthz': (req, res) => {
+    const { participants } = stats(db);
+    send(res, 200, `ok ${participants}`, { 'Content-Type': 'text/plain; charset=utf-8' });
+  },
   'GET /leaderboard': (req, res) =>
     send(res, 200, leaderboardPage({ rows: leaderboard(db) })),
 
@@ -363,7 +369,14 @@ server.listen(PORT, () => {
   console.log(`COMMIT-ed running on http://localhost:${PORT}`);
 });
 
-process.on('SIGINT', () => {
-  db.close();
-  server.close(() => process.exit(0));
-});
+function shutdown() {
+  server.close(() => {
+    db.close();
+    process.exit(0);
+  });
+  // Don't hang forever on a stuck connection.
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

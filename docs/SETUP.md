@@ -68,19 +68,8 @@ If those four steps pass, the app is done. That's the entire product.
 
 ## Deploy
 
-Any host that runs a Node process and gives you a persistent disk works — a small VPS, Fly,
-Render, Railway. There is no build step: copy the repo, set the environment variables, run
-`node src/server.js` under a process manager (systemd, pm2) behind a TLS-terminating proxy.
-
-Serverless and container platforms with ephemeral filesystems will lose the SQLite file on
-every deploy — mount a volume, or do not use them.
-
-Whatever you pick, before the event starts:
-
-- [ ] `ADMIN_PASSWORD` set in the host's environment config, not in a file
-- [ ] Database persists across restarts — check this, free tiers often have ephemeral disks
-- [ ] HTTPS on, since the admin password crosses the wire
-- [ ] The submit and leaderboard URLs are public and shareable
+See [DEPLOY.md](DEPLOY.md) — Dockerfile, Railway, Fly.io and VPS instructions, plus why
+serverless hosts (Vercel, Netlify Functions) cannot run this app.
 
 ## Backups
 
