@@ -1,5 +1,5 @@
 /* Motion layer: scroll reveals, letter splitting, count-ups, thwip clicks,
-   cursor reticle, card tilt. Everything degrades to a static page if it fails. */
+   card tilt. Everything degrades to a static page if it fails. */
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -42,6 +42,7 @@ if (reduced || !('IntersectionObserver' in window)) {
 /* ---------- header: shrink + scroll progress bar ---------- */
 
 const head = document.querySelector('.site-head');
+const skyline = document.querySelector('.skyline');
 let ticking = false;
 
 function onScroll() {
@@ -52,6 +53,10 @@ function onScroll() {
     const pct = max > 0 ? (window.scrollY / max) * 100 : 0;
     head.style.setProperty('--scroll', `${pct}%`);
     head.classList.toggle('stuck', window.scrollY > 30);
+    // City drifts down slower than the page — depth behind the hero.
+    if (skyline && !reduced) {
+      skyline.style.setProperty('--para', `${Math.min(window.scrollY * 0.22, 160)}px`);
+    }
     ticking = false;
   });
 }
@@ -143,38 +148,6 @@ if (!reduced && finePointer) {
     });
     setTimeout(() => line.remove(), 460);
   });
-}
-
-/* ---------- cursor reticle ---------- */
-
-if (!reduced && finePointer) {
-  const reticle = document.createElement('div');
-  reticle.className = 'reticle';
-  document.body.append(reticle);
-
-  let x = 0;
-  let y = 0;
-  let rx = 0;
-  let ry = 0;
-
-  document.addEventListener('mousemove', (event) => {
-    x = event.clientX;
-    y = event.clientY;
-    reticle.classList.add('on');
-    reticle.classList.toggle(
-      'hot',
-      Boolean(event.target.closest('a, button, input, select, .card, .review')),
-    );
-  });
-  document.addEventListener('mouseleave', () => reticle.classList.remove('on'));
-
-  (function follow() {
-    // Trails slightly behind the real cursor — reads as a spider-sense sweep.
-    rx += (x - rx) * 0.22;
-    ry += (y - ry) * 0.22;
-    reticle.style.transform = `translate(${rx}px, ${ry}px)`;
-    requestAnimationFrame(follow);
-  })();
 }
 
 /* ---------- pointer tilt on the terminal card and badge preview ---------- */

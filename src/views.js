@@ -67,6 +67,71 @@ const CORNER_WEB = `<svg class="corner-web" viewBox="0 0 200 200" aria-hidden="t
   </g>
 </svg>`;
 
+
+/**
+ * Comic-ink skyline for the landing page: solid black towers with lit windows.
+ * Built once at boot from a fixed table so every render is identical.
+ */
+function buildSkyline() {
+  const W = 1440;
+  const H = 420;
+  const towers = [
+    [-20, 130, 392], [104, 92, 300], [186, 74, 232], [248, 112, 336], [350, 84, 204],
+    [420, 104, 272], [512, 72, 168], [572, 122, 306], [682, 92, 222], [760, 74, 150],
+    [820, 112, 262], [922, 84, 192], [988, 104, 324], [1080, 72, 212], [1138, 124, 366],
+    [1248, 92, 250], [1326, 134, 404],
+  ];
+
+  let out = '';
+  let win = 0;
+
+  towers.forEach(([x, w, h], i) => {
+    const y = H - h;
+    out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2"/>`;
+
+    // Water tower or antenna on the taller blocks, for a city silhouette.
+    if (h > 300) {
+      const cx = x + w / 2;
+      out += `<rect x="${cx - 2}" y="${y - 34}" width="4" height="34"/>`;
+      out += `<circle cx="${cx}" cy="${y - 40}" r="5"/>`;
+    }
+
+    for (let col = x + 15; col < x + w - 18; col += 27) {
+      for (let row = y + 26; row < H - 20; row += 32) {
+        // Deterministic scatter: same windows dark on every render.
+        const n = ((col * 73856093) ^ (row * 19349663)) >>> 0;
+        if (n % 5 === 0) continue;
+        const lit = n % 7 === 0 ? 'var(--yellow)' : 'var(--pink-pale)';
+        const delay = (0.6 + ((win % 24) * 0.045)).toFixed(2);
+        out += `<rect class="win" x="${col}" y="${row}" width="12" height="17" fill="${lit}"
+          style="--wd:${delay}s"/>`;
+        win += 1;
+      }
+    }
+  });
+
+  return `<div class="skyline" aria-hidden="true">
+  <svg viewBox="0 0 ${W} ${H}" fill="var(--ink)">${out}</svg>
+</div>`;
+}
+
+const SKYLINE = buildSkyline();
+
+/** Three yellow speed strokes, poster style. */
+const SPEED_LINES = `<svg class="speed-lines" viewBox="0 0 120 60" aria-hidden="true">
+  <path d="M14 54 L30 8"/>
+  <path d="M46 52 L58 6"/>
+  <path d="M78 50 L86 6"/>
+</svg>`;
+
+/** Web splat where the strand meets the card it is holding up. */
+const WEB_ANCHOR = `<svg class="anchor" viewBox="0 0 80 40" aria-hidden="true">
+  <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+    <path d="M40 2 L8 32M40 2 L20 36M40 2 L40 38M40 2 L60 36M40 2 L72 32"/>
+    <path d="M28 14 Q40 20 52 14M20 22 Q40 31 60 22M13 29 Q40 41 67 29"/>
+  </g>
+</svg>`;
+
 /** Original spider glyph — body, head and eight legs. */
 const SPIDER = `<svg class="spider" viewBox="0 0 32 32" aria-hidden="true">
   <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round">
@@ -88,9 +153,10 @@ export function homePage({ stats }) {
     active: '/',
     body: `
 <section class="hero">
+  ${SKYLINE}
   ${CORNER_WEB}
-  <span class="web-drop">${SPIDER}</span>
   <div class="hero-copy">
+    ${SPEED_LINES}
     <h1><span class="script">COMMIT-ed</span><br>
         <span class="outline" data-split>Open Source Season</span></h1>
     <p>Build in public with your campus community. Grab a contributor badge, ship a pull
@@ -105,8 +171,10 @@ export function homePage({ stats }) {
       <div><dt data-count="${stats.points}">${stats.points}</dt><dd>Points awarded</dd></div>
     </dl>
   </div>
-  <div class="hero-card">
-    <div class="term" data-tilt="7">
+  <div class="hero-card hang">
+    <span class="hang-line">${SPIDER}</span>
+    <span class="hang-anchor">${WEB_ANCHOR}</span>
+    <div class="term">
       <div class="term-bar"><i></i><i></i><i></i><span>season.ts</span></div>
       <pre><code><span class="k">const</span> season = openSource.<span class="f">start</span>({
   window: <span class="s">'4 weeks'</span>,
@@ -185,16 +253,24 @@ export function badgePage() {
       </select>
     </label>
     <label>
-      Accent
-      <span class="swatches" id="f-accent">
-        <button type="button" class="sw selected" data-accent="#e01b24" style="--sw:#e01b24"
-                title="Web red"></button>
-        <button type="button" class="sw" data-accent="#3d5ce0" style="--sw:#3d5ce0"
-                title="Suit blue"></button>
-        <button type="button" class="sw" data-accent="#ffd23f" style="--sw:#ffd23f"
-                title="Comic gold"></button>
-        <button type="button" class="sw" data-accent="#23d9a0" style="--sw:#23d9a0"
-                title="Symbiote green"></button>
+      Suit theme
+      <span class="swatches" id="f-theme">
+        <button type="button" class="sw selected" title="Spider-Gwen"
+                data-accent="#ff4fa3" data-secondary="#37e6e6"
+                data-bg1="#241344" data-bg2="#0d0620"
+                style="--sw:#ff4fa3; --sw2:#37e6e6"><span>Gwen</span></button>
+        <button type="button" class="sw" title="Miles Morales"
+                data-accent="#ff2b4d" data-secondary="#a855f7"
+                data-bg1="#16101f" data-bg2="#07060c"
+                style="--sw:#ff2b4d; --sw2:#a855f7"><span>Miles</span></button>
+        <button type="button" class="sw" title="Pavitr Prabhakar"
+                data-accent="#ffb020" data-secondary="#29c4c4"
+                data-bg1="#23163d" data-bg2="#0e0820"
+                style="--sw:#ffb020; --sw2:#29c4c4"><span>Pavitr</span></button>
+        <button type="button" class="sw" title="Classic Spider-Man"
+                data-accent="#e01b24" data-secondary="#3d5ce0"
+                data-bg1="#141a3d" data-bg2="#07091a"
+                style="--sw:#e01b24; --sw2:#3d5ce0"><span>Classic</span></button>
       </span>
     </label>
     <p class="hint" id="badge-hint">The avatar comes straight from your GitHub profile

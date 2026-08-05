@@ -8,10 +8,20 @@ const H = canvas.height;
 const nameInput = document.getElementById('f-name');
 const userInput = document.getElementById('f-username');
 const roleInput = document.getElementById('f-role');
-const accentBox = document.getElementById('f-accent');
+const themeBox = document.getElementById('f-theme');
 const hint = document.getElementById('badge-hint');
 
-const state = { name: '', username: '', role: 'Contributor', accent: '#e01b24' };
+const THEMES = {
+  gwen: { accent: '#ff4fa3', secondary: '#37e6e6', bg1: '#241344', bg2: '#0d0620' },
+};
+
+const state = {
+  name: '',
+  username: '',
+  role: 'Contributor',
+  // Overwritten by the selected chip; Spider-Gwen is the default suit.
+  theme: THEMES.gwen,
+};
 
 /** Avatars are cached per username so typing does not refetch on every keystroke. */
 const avatars = new Map();
@@ -94,7 +104,7 @@ function drawAvatar(cx, cy, r) {
       .slice(0, 2)
       .map((w) => w[0].toUpperCase())
       .join('');
-    ctx.fillStyle = state.accent;
+    ctx.fillStyle = state.theme.accent;
     ctx.font = `700 ${r}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -102,17 +112,21 @@ function drawAvatar(cx, cy, r) {
   }
   ctx.restore();
 
+  // Ring blends the suit's two colours.
+  const ring = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  ring.addColorStop(0, state.theme.accent);
+  ring.addColorStop(1, state.theme.secondary);
   ctx.beginPath();
   ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
-  ctx.strokeStyle = state.accent;
+  ctx.strokeStyle = ring;
   ctx.lineWidth = 5;
   ctx.stroke();
 }
 
 /** Radial web in a corner: spokes plus catenary-ish cross strands. */
-function drawWeb(cx, cy, radius, rings, spokes, from, to) {
+function drawWeb(cx, cy, radius, rings, spokes, from, to, color) {
   const step = (to - from) / spokes;
-  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.strokeStyle = color;
   ctx.lineWidth = 1.4;
 
   for (let i = 0; i <= spokes; i += 1) {
@@ -165,14 +179,14 @@ function drawHalftone(cx, cy, radius, color) {
 }
 
 function draw() {
-  const accent = state.accent;
+  const { accent, secondary, bg1, bg2 } = state.theme;
   ctx.clearRect(0, 0, W, H);
 
-  // Card background — deep comic navy
+  // Card background — the suit's own dark tones
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#141a3d');
-  bg.addColorStop(0.55, '#0b0f24');
-  bg.addColorStop(1, '#07091a');
+  bg.addColorStop(0, bg1);
+  bg.addColorStop(0.6, bg2);
+  bg.addColorStop(1, bg2);
   ctx.fillStyle = bg;
   roundRect(0, 0, W, H, 30);
   ctx.fill();
@@ -181,22 +195,28 @@ function draw() {
   roundRect(0, 0, W, H, 30);
   ctx.clip();
 
-  // Accent glow, top right
+  // Suit glow top right, webbing glow bottom left
   const glow = ctx.createRadialGradient(W - 100, -40, 20, W - 100, -40, 560);
   glow.addColorStop(0, hexToRgba(accent, 0.42));
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
+  const glow2 = ctx.createRadialGradient(40, H + 40, 20, 40, H + 40, 480);
+  glow2.addColorStop(0, hexToRgba(secondary, 0.26));
+  glow2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow2;
+  ctx.fillRect(0, 0, W, H);
+
   // Webs in the top-right and bottom-left corners
-  drawWeb(W, 0, 430, 5, 9, Math.PI * 0.5, Math.PI);
-  drawWeb(0, H, 330, 4, 8, -Math.PI * 0.5, 0);
+  drawWeb(W, 0, 430, 5, 9, Math.PI * 0.5, Math.PI, hexToRgba(accent, 0.3));
+  drawWeb(0, H, 330, 4, 8, -Math.PI * 0.5, 0, hexToRgba(secondary, 0.26));
 
   // Halftone wash behind the identity block
   drawHalftone(470, 300, 230, accent);
 
   // Diagonal speed streaks
-  ctx.strokeStyle = hexToRgba(accent, 0.18);
+  ctx.strokeStyle = hexToRgba(secondary, 0.3);
   ctx.lineWidth = 3;
   for (let i = 0; i < 5; i += 1) {
     const y = 150 + i * 26;
@@ -213,7 +233,7 @@ function draw() {
   ctx.lineWidth = 4;
   ctx.stroke();
   roundRect(12, 12, W - 24, H - 24, 22);
-  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.strokeStyle = hexToRgba(secondary, 0.5);
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
@@ -247,12 +267,12 @@ function draw() {
   ctx.font = `800 italic ${size}px ${FONT}`;
   ctx.lineJoin = 'round';
   ctx.lineWidth = 8;
-  ctx.strokeStyle = 'rgba(7,9,26,0.9)';
+  ctx.strokeStyle = hexToRgba(bg2, 0.92);
   ctx.strokeText(name, left, 300);
   ctx.fillStyle = '#ffffff';
   ctx.fillText(name, left, 300);
 
-  ctx.fillStyle = hexToRgba(accent, 0.95);
+  ctx.fillStyle = hexToRgba(secondary, 0.95);
   ctx.font = `600 24px ${MONO}`;
   ctx.fillText(`@${state.username || 'github-handle'}`, left, 344);
 
@@ -271,7 +291,7 @@ function draw() {
   ctx.closePath();
   ctx.fillStyle = accent;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(7,9,26,0.85)';
+  ctx.strokeStyle = hexToRgba(bg2, 0.9);
   ctx.lineWidth = 3;
   ctx.stroke();
   ctx.fillStyle = '#ffffff';
@@ -317,14 +337,25 @@ for (const el of [nameInput, userInput, roleInput]) {
   });
 }
 
-accentBox.addEventListener('click', (event) => {
-  const button = event.target.closest('.sw');
-  if (!button) return;
-  for (const sw of accentBox.querySelectorAll('.sw')) sw.classList.remove('selected');
+function applyTheme(button) {
+  for (const sw of themeBox.querySelectorAll('.sw')) sw.classList.remove('selected');
   button.classList.add('selected');
-  state.accent = button.dataset.accent;
+  state.theme = {
+    accent: button.dataset.accent,
+    secondary: button.dataset.secondary,
+    bg1: button.dataset.bg1,
+    bg2: button.dataset.bg2,
+  };
   draw();
+}
+
+themeBox.addEventListener('click', (event) => {
+  const button = event.target.closest('.sw');
+  if (button) applyTheme(button);
 });
+
+// Start on whichever chip is marked selected in the markup.
+applyTheme(themeBox.querySelector('.sw.selected') || themeBox.querySelector('.sw'));
 
 document.getElementById('badge-form').addEventListener('submit', (e) => e.preventDefault());
 

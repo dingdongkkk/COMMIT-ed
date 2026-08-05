@@ -58,14 +58,19 @@ public/
 
 ## Look and feel
 
-Comic-book web-slinger: red and blue palette, halftone dots, web patterns and panel
-borders. Every graphic is original CSS or hand-written SVG drawn in this repo — no
-third-party logos, character art or fonts, and no external requests beyond GitHub avatars.
+Comic poster: candy pink sky, black ink linework, yellow signage, hard offset shadows.
+The landing page sits in front of an inked city skyline with lit windows, and the code card
+drops in on a web strand and keeps swaying. Every graphic is original CSS or hand-written
+SVG generated in this repo — no third-party logos, character art or fonts, and no external
+requests beyond GitHub avatars.
 
 Motion is handled in [public/fx.js](public/fx.js): scroll reveals, an animated hero title,
-stat count-ups, a web-line "thwip" on click, a trailing cursor reticle, and pointer tilt on
-the badge preview. Anything already on screen at load skips its reveal, and the whole motion
-layer switches itself off under `prefers-reduced-motion`.
+stat count-ups, skyline parallax, and a web-line "thwip" on click. Anything already on
+screen at load skips its reveal, and the whole motion layer switches itself off under
+`prefers-reduced-motion`.
+
+The badge offers four suit themes — Gwen, Miles, Pavitr and Classic — each with its own
+accent, webbing colour and card tones.
 
 ## Docs
 
