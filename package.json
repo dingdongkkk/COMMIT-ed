@@ -4,9 +4,6 @@
   "private": true,
   "description": "Leaderboard app for an open source event: badge generator, PR submissions, manual admin scoring.",
   "type": "module",
-  "engines": {
-    "node": ">=20.0.0"
-  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
