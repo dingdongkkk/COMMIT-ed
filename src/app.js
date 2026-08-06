@@ -40,12 +40,24 @@ import {
 } from './views.js';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-if (!ADMIN_PASSWORD || ADMIN_PASSWORD === 'change-me') {
-  // Thrown rather than exited: on a serverless host this has to surface as a
-  // readable function error, not a silent dead process.
-  throw new Error(
-    'ADMIN_PASSWORD is unset (or still "change-me"). Set it in the environment.',
-  );
+
+/**
+ * Misconfiguration is reported per request, not thrown at import. A throw at
+ * module scope on a serverless host shows up as an opaque
+ * FUNCTION_INVOCATION_FAILED with nothing to act on; this way the page itself
+ * names the variable that is missing.
+ */
+function configError() {
+  if (!ADMIN_PASSWORD || ADMIN_PASSWORD === 'change-me') {
+    return 'ADMIN_PASSWORD is not set on this deployment (or is still "change-me").';
+  }
+  if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+    return 'SESSION_SECRET is not set on this deployment. Without it, admin logins break as soon as a second instance starts.';
+  }
+  if (!process.env.TURSO_DATABASE_URL && process.env.NODE_ENV === 'production') {
+    return 'TURSO_DATABASE_URL is not set on this deployment, so there is nowhere to store submissions.';
+  }
+  return null;
 }
 
 if (!process.env.GITHUB_TOKEN) {
@@ -55,15 +67,7 @@ if (!process.env.GITHUB_TOKEN) {
   );
 }
 
-if (!process.env.SESSION_SECRET) {
-  // Serverless runs many instances; without a shared secret each one signs
-  // cookies differently and admins get logged out at random.
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'SESSION_SECRET is required in production — without it, admin logins break ' +
-        'as soon as a second instance starts.',
-    );
-  }
+if (!process.env.SESSION_SECRET && process.env.NODE_ENV !== 'production') {
   console.warn(
     'SESSION_SECRET is unset — a random one is generated per boot, so every ' +
       'restart signs admins out. Set it before the event.',
@@ -343,6 +347,12 @@ async function handleRefresh(req, res, id) {
 }
 
 export async function handle(req, res) {
+  const problem = configError();
+  if (problem) {
+    console.error(`Configuration error: ${problem}`);
+    return send(res, 500, errorPage(500, `Not configured yet — ${problem}`));
+  }
+
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = url.pathname.replace(/\/+$/, '') || '/';
@@ -366,7 +376,10 @@ export async function handle(req, res) {
     send(res, 404, errorPage(404, 'That page does not exist.'));
   } catch (err) {
     console.error(err);
-    if (!res.headersSent) send(res, 500, errorPage(500, 'Something went wrong.'));
+    // Surface the reason while you are still setting the deployment up; a
+    // generic page here costs an hour of guessing at the dashboard.
+    const detail = process.env.SHOW_ERRORS === 'true' ? `: ${err?.message}` : '.';
+    if (!res.headersSent) send(res, 500, errorPage(500, `Something went wrong${detail}`));
     else res.end();
   }
 }
