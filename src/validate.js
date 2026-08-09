@@ -1,3 +1,5 @@
+import { isValidGithubId } from './github-ids.js';
+
 const USERNAME_RE = /^[a-zA-Z0-9-]{1,39}$/;
 const PR_URL_RE = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/;
 
@@ -13,6 +15,9 @@ export function validateUsername(raw) {
   if (!username) return { error: 'GitHub username is required.' };
   if (!USERNAME_RE.test(username)) {
     return { error: 'That is not a valid GitHub username (letters, numbers and hyphens).' };
+  }
+  if (!isValidGithubId(username)) {
+    return { error: 'GitHub username is not recognized in the list of valid event participants.' };
   }
   return { value: username };
 }

@@ -68,3 +68,68 @@ export async function fetchPrLabels(prUrl) {
     return { labels: [], error: `Could not reach GitHub (${reason}) — try refreshing.` };
   }
 }
+
+const repoCache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+
+export async function fetchRepoDetails(owner, repo) {
+  const cacheKey = `${owner.toLowerCase()}/${repo.toLowerCase()}`;
+  const cached = repoCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const url = `${API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      const fallback = {
+        description: `Open source repository: ${owner}/${repo}`,
+        language: null,
+        topics: [],
+        stars: 0,
+        techStack: ['Open Source'],
+        error: `GitHub returned ${response.status}`,
+      };
+      repoCache.set(cacheKey, { timestamp: Date.now(), data: fallback });
+      return fallback;
+    }
+
+    const data = await response.json();
+    const language = data.language || null;
+    const topics = Array.isArray(data.topics) ? data.topics : [];
+
+    const stackSet = new Set();
+    if (language) stackSet.add(language);
+    topics.forEach((t) => stackSet.add(t));
+    if (stackSet.size === 0) stackSet.add('Open Source');
+
+    const result = {
+      description: data.description || `Open source project on GitHub by ${owner}.`,
+      language,
+      topics,
+      stars: typeof data.stargazers_count === 'number' ? data.stargazers_count : 0,
+      techStack: Array.from(stackSet),
+      error: null,
+    };
+
+    repoCache.set(cacheKey, { timestamp: Date.now(), data: result });
+    return result;
+  } catch (err) {
+    const fallback = {
+      description: `Open source repository: ${owner}/${repo}`,
+      language: null,
+      topics: [],
+      stars: 0,
+      techStack: ['Open Source'],
+      error: 'Could not reach GitHub',
+    };
+    return fallback;
+  }
+}
+

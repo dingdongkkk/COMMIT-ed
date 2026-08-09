@@ -13,10 +13,11 @@ import {
   readLabels,
   saveLabels,
   submissionsByStatus,
+  submittedRepositories,
   reviewSubmission,
   stats,
 } from './db.js';
-import { fetchPrLabels } from './github.js';
+import { fetchPrLabels, fetchRepoDetails } from './github.js';
 import { scoreLabels } from './points.js';
 import {
   clearSession,
@@ -36,6 +37,7 @@ import {
   errorPage,
   homePage,
   leaderboardPage,
+  projectsPage,
   submitPage,
 } from './views.js';
 
@@ -155,6 +157,24 @@ const routes = {
   },
   'GET /leaderboard': async (req, res) =>
     send(res, 200, leaderboardPage({ rows: await leaderboard() })),
+
+  'GET /projects': async (req, res) => {
+    const rawProjects = await submittedRepositories();
+    const projects = await Promise.all(
+      rawProjects.map(async (p) => {
+        const details = await fetchRepoDetails(p.owner, p.repo);
+        return {
+          ...p,
+          description: details.description,
+          language: details.language,
+          topics: details.topics,
+          techStack: details.techStack,
+          stars: details.stars,
+        };
+      }),
+    );
+    send(res, 200, projectsPage({ projects }));
+  },
 
   'GET /submit': async (req, res) =>
     send(res, 200, submitPage({ values: {}, success: '' })),
