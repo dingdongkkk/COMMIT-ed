@@ -313,6 +313,24 @@ export function badgePage({ step = 'verify', username = '', error = '' } = {}) {
   });
 }
 
+function scoreCallout(scored) {
+  if (!scored) return '';
+  const chips = scored.labels.length
+    ? `<p class="chips">${scored.labels
+        .map((l) => `<span class="chip">${escape(l)}</span>`)
+        .join('')}</p>`
+    : '';
+  const line = scored.tier
+    ? `This pull request is labelled <strong>${escape(scored.tier)}</strong> — worth
+       <strong>${scored.points} points</strong> once an organiser approves it.`
+    : escape(
+        scored.error ||
+          'No difficulty label on it yet. Once the project admin adds one, it will be worth ' +
+            'points — an organiser re-checks at review time.',
+      );
+  return `<div class="score-callout"><p>${line}</p>${chips}</div>`;
+}
+
 export function submitPage({ values = {}, error = '', success = '', scored = null } = {}) {
   return layout({
     title: 'Submit a pull request',
