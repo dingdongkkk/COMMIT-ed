@@ -55,12 +55,20 @@ function loadArt(src) {
   img.src = src;
 }
 
-/** Centre-crop to fill the card: never squashed, never letterboxed. */
+/**
+ * Centre-crop to fill the card: never squashed, never letterboxed. A slight
+ * blur pushes the art back so the name reads as the subject — without it the
+ * artwork's own lettering competes with the contributor's name.
+ */
 function drawArt(image) {
   const scale = Math.max(W / image.width, H / image.height);
   const w = image.width * scale;
   const h = image.height * scale;
-  ctx.drawImage(image, (W - w) / 2, (H - h) / 2, w, h);
+  ctx.save();
+  ctx.filter = 'blur(3px)';
+  // Overdraw the edges so the blur doesn't leave soft borders inside the card.
+  ctx.drawImage(image, (W - w) / 2 - 8, (H - h) / 2 - 8, w + 16, h + 16);
+  ctx.restore();
 }
 
 const state = {
@@ -249,10 +257,18 @@ function draw() {
     // Heavier on the left where the name and avatar sit, lighter on the right
     // so the artwork still reads.
     const scrim = ctx.createLinearGradient(0, 0, W, 0);
-    scrim.addColorStop(0, hexToRgba(bg2, 0.94));
-    scrim.addColorStop(0.55, hexToRgba(bg2, 0.78));
-    scrim.addColorStop(1, hexToRgba(bg2, 0.42));
+    scrim.addColorStop(0, hexToRgba(bg2, 0.97));
+    scrim.addColorStop(0.5, hexToRgba(bg2, 0.93));
+    scrim.addColorStop(0.72, hexToRgba(bg2, 0.72));
+    scrim.addColorStop(1, hexToRgba(bg2, 0.4));
     ctx.fillStyle = scrim;
+    ctx.fillRect(0, 0, W, H);
+
+    // A second wash from the bottom keeps the footer line legible over art.
+    const floor = ctx.createLinearGradient(0, H * 0.6, 0, H);
+    floor.addColorStop(0, 'rgba(0,0,0,0)');
+    floor.addColorStop(1, hexToRgba(bg2, 0.85));
+    ctx.fillStyle = floor;
     ctx.fillRect(0, 0, W, H);
   }
 
