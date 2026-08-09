@@ -71,7 +71,8 @@ ${head}
 <body>
 <header class="site-head" style="position: relative;">
   <!-- Far Left Logo -->
-  <img src="/protocol1.png" alt="Protocol Logo" class="nav-logo logo-left">
+  <img src="/protocol1.png" alt="Protocol Logo" class="nav-logo logo-left"
+       width="3654" height="1838">
 
   <a class="brand" href="/">COMMIT<span>-ed</span>.</a>
   <nav>
@@ -83,7 +84,8 @@ ${head}
   <a class="cta" href="/badge">Get your badge</a>
 
   <!-- Far Right Logo -->
-  <img src="/ieee1.png" alt="IEEE Logo" class="nav-logo logo-right">
+  <img src="/ieee1.png" alt="IEEE Logo" class="nav-logo logo-right"
+       width="816" height="334">
 </header>
 <main>
 ${body}

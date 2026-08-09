@@ -1458,5 +1458,17 @@ input:focus, select:focus {
   display: block;
 }
 
-.logo-left { height: clamp(26px, 4vw, 46px); }
-.logo-right { height: clamp(22px, 3.2vw, 38px); }
+/**
+ * Each logo declares its own aspect ratio so the browser reserves the right
+ * width before the file arrives. Without this the images measure zero until
+ * they load, the wordmark starts hard against the left edge, and everything
+ * jumps sideways when they appear.
+ */
+.logo-left {
+  height: clamp(26px, 4vw, 46px);
+  aspect-ratio: 3654 / 1838;
+}
+.logo-right {
+  height: clamp(22px, 3.2vw, 38px);
+  aspect-ratio: 816 / 334;
+}
