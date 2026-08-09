@@ -11,9 +11,17 @@ export function escape(value) {
     .replaceAll("'", '&#39;');
 }
 
-/** Changes on every boot, so a restarted server never serves a page that
-    points at a browser-cached stylesheet or script from the previous build. */
-const V = Date.now().toString(36);
+/**
+ * Cache key for the CSS and JS. It has to change per *deployment*, not per
+ * process: serverless starts a fresh process constantly, and a per-boot value
+ * makes every visitor re-download the stylesheet they already have. Vercel
+ * exposes the commit; everything else falls back to boot time.
+ */
+const V = (
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.COMMIT_SHA ||
+  Date.now().toString(36)
+).slice(0, 12);
 
 const NAV = [
   ['/', 'Home'],
