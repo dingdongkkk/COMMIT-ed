@@ -1401,3 +1401,24 @@ input:focus, select:focus {
   font-size: 11px;
 }
 
+/* Shared Navigation Logo Properties */
+.nav-logo {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  object-fit: contain;
+  /* Removed 'height' from here so they can be sized individually */
+}
+
+/* Top Left Logo */
+.logo-left {
+  left: 20px;
+  height: 65px; /* Increase this number until the visual weight matches the right logo */
+}
+
+/* Top Right Logo */
+.logo-right {
+  right: 20px;
+  height: 45px; /* Kept at the original size that looked correct */
+}

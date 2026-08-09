@@ -2,6 +2,8 @@ import { POINTS } from './points.js';
 import { readLabels } from './db.js';
 import { scoreSummary } from './points.js';
 
+
+
 export function escape(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -17,11 +19,41 @@ const V = Date.now().toString(36);
 
 const NAV = [
   ['/', 'Home'],
+  ['/get-started', 'Get Started'],
+  ['/projects', 'Projects'],
   ['/badge', 'Badge'],
   ['/submit', 'Submit PR'],
-  ['/projects', 'Projects'],
   ['/leaderboard', 'Leaderboard'],
+  ['/rules', 'Rules']
 ];
+
+const projectsData = {
+  beginner: [
+    { name: "dhairyagothi/100_days_100_web_project", link: "https://github.com/dhairyagothi/100_days_100_web_project", stack: "HTML / CSS / JavaScript" },
+    { name: "MRIARC-08/VidyaSetu", link: "https://github.com/MRIARC-08/VidyaSetu", stack: "React / Next.js / AI" },
+    { name: "Venkat-Kolasani/FutureStack", link: "https://github.com/Venkat-Kolasani/FutureStack", stack: "React / JavaScript" },
+    { name: "12fahed/CertiNova", link: "https://github.com/12fahed/CertiNova", stack: "TypeScript" },
+    { name: "Mayur-Pagote/README_Design_Kit", link: "https://github.com/Mayur-Pagote/README_Design_Kit", stack: "Developer Documentation / Tooling" },
+    { name: "darshan2456/C_DSA_interactive_suite", link: "https://github.com/darshan2456/C_DSA_interactive_suite", stack: "C / DSA" },
+    { name: "PRODHOSH/gssoc-tracker", link: "https://github.com/PRODHOSH/gssoc-tracker", stack: "Next.js / TypeScript" }
+  ],
+  intermediate: [
+    { name: "Ruthwik000/tokenfirewall", link: "https://github.com/Ruthwik000/tokenfirewall", stack: "TypeScript / LLM Infrastructure" },
+    { name: "im-anishraj/arnio", link: "https://github.com/im-anishraj/arnio", stack: "Python / Data Science / C++" },
+    { name: "riteshbonthalakoti/HELPDESK.AI", link: "https://github.com/riteshbonthalakoti/HELPDESK.AI", stack: "FastAPI / React / AI" },
+    { name: "kalyan-1845/ai-code-reviewer", link: "https://github.com/kalyan-1845/ai-code-reviewer", stack: "AI / Security / Web" },
+    { name: "itzzavdhesh/VoiceForge", link: "https://github.com/itzzavdhesh/VoiceForge", stack: "AI / Accessibility" },
+    { name: "SamXop123/samdev-pulse", link: "https://github.com/SamXop123/samdev-pulse", stack: "JavaScript / GitHub API" },
+    { name: "Shivayan09/Vector-social-media", link: "https://github.com/Shivayan09/Vector-social-media", stack: "Next.js / Node.js / MongoDB" },
+    { name: "ManabBiswas/EkagraFocus", link: "https://github.com/ManabBiswas/EkagraFocus", stack: "Electron / React / TypeScript" },
+    { name: "Abhigyan-Shekhar/Waggle-mcp", link: "https://github.com/Abhigyan-Shekhar/Waggle-mcp", stack: "Python 3.11+, SQLite, Neo4j, MCP, React, Vite" }
+  ],
+  advanced: [
+    { name: "RatLoopz/sahidawa-india", link: "https://github.com/RatLoopz/sahidawa-india", stack: "Next.js / TypeScript / Security / Testing" },
+    { name: "NEXARA-oss/PulseStack", link: "https://github.com/NEXARA-oss/PulseStack", stack: "AI Infrastructure / Observability" },
+    { name: "OWASP-BLT/BLT", link: "https://github.com/OWASP/www-project-bug-logging-tool", stack: "Python / Cybersecurity" }
+  ]
+};
 
 export function layout({ title, active, body, head = '', scripts = '' }) {
   return `<!doctype html>
@@ -35,7 +67,10 @@ export function layout({ title, active, body, head = '', scripts = '' }) {
 ${head}
 </head>
 <body>
-<header class="site-head">
+<header class="site-head" style="position: relative;">
+  <!-- Far Left Logo -->
+  <img src="/protocol1.png" alt="Protocol Logo" class="nav-logo logo-left">
+
   <a class="brand" href="/">COMMIT<span>-ed</span>.</a>
   <nav>
     ${NAV.map(
@@ -44,6 +79,9 @@ ${head}
     ).join('\n    ')}
   </nav>
   <a class="cta" href="/badge">Get your badge</a>
+
+  <!-- Far Right Logo -->
+  <img src="/ieee1.png" alt="IEEE Logo" class="nav-logo logo-right">
 </header>
 <main>
 ${body}
@@ -216,6 +254,13 @@ season.<span class="f">on</span>(<span class="s">'pull_request'</span>, () =&gt;
     <p>Approved points stack up. Ties break in favour of whoever got there first.</p>
     <a href="/leaderboard">View leaderboard →</a>
   </article>
+  <!-- New Rules Card -->
+  <article class="card">
+    <span class="tag">The Law</span>
+    <h2>Rules & Guidelines</h2>
+    <p>Read the official event rules, contribution guidelines, and understand the real open-source workflow we follow.[cite: 3]</p>
+    <a href="/rules">Read the rules →</a>
+  </article>
 </section>`,
   });
 }
@@ -353,68 +398,7 @@ export function submitPage({ values = {}, error = '', success = '', scored = nul
   });
 }
 
-export function projectsPage({ projects }) {
-  const content =
-    projects.length === 0
-      ? `<div class="panel empty-projects">
-          <h2>No submitted repositories yet</h2>
-          <p>As contributors submit pull requests, the repositories will automatically appear here with their descriptions and tech stacks.</p>
-          <div class="row" style="margin-top: 12px;">
-            <a class="btn primary" href="/submit">Submit a pull request →</a>
-          </div>
-        </div>`
-      : `<div class="projects-grid">
-    ${projects
-      .map((p) => {
-        const techChips = p.techStack.length
-          ? p.techStack
-              .map((tech) => `<span class="tech-chip">${escape(tech)}</span>`)
-              .join('')
-          : '<span class="tech-chip">Open Source</span>';
 
-        return `<article class="project-card">
-          <div class="project-card-header">
-            <div class="repo-name-group">
-              <span class="tag">Repo</span>
-              <h2><a href="${escape(p.repoUrl)}" target="_blank" rel="noopener noreferrer">${escape(p.fullName)} ↗</a></h2>
-            </div>
-            ${p.stars ? `<span class="star-badge" title="GitHub Stars">★ ${p.stars}</span>` : ''}
-          </div>
-          <p class="project-desc">${escape(p.description)}</p>
-
-          <div class="tech-stack-section">
-            <span class="tech-label">Tech Stack</span>
-            <div class="tech-chips">${techChips}</div>
-          </div>
-
-          <div class="project-footer">
-            <div class="project-stats">
-              <span title="Total PRs submitted"><strong>${p.totalPrs}</strong> PR${p.totalPrs === 1 ? '' : 's'}</span>
-              <span title="Approved PRs"><strong>${p.approvedPrs}</strong> Approved</span>
-              <span title="Unique Contributors"><strong>${p.contributorsCount}</strong> Contributor${p.contributorsCount === 1 ? '' : 's'}</span>
-            </div>
-            <div class="project-actions">
-              <a class="btn small primary" href="/submit">Submit PR</a>
-              <a class="btn small ghost" href="${escape(p.repoUrl)}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-            </div>
-          </div>
-        </article>`;
-      })
-      .join('\n')}
-  </div>`;
-
-  return layout({
-    title: 'Submitted Projects',
-    active: '/projects',
-    body: `
-<section class="page-head">
-  <p class="eyebrow">Event Repositories</p>
-  <h1>Submitted Projects</h1>
-  <p>Explore all submitted open-source repositories, discover their tech stacks, and start contributing to earn leaderboard points!</p>
-</section>
-<section class="projects-section">${content}</section>`,
-  });
-}
 
 export function leaderboardPage({ rows }) {
   const body =
@@ -607,5 +591,343 @@ export function errorPage(status, message, back = '/') {
     body: `<section class="page-head"><h1>${status}</h1><p>${escape(message)}</p>
       <p style="margin-top:22px"><a class="btn primary" href="${escape(back)}">${label}</a></p>
       </section>`,
+  });
+}
+
+
+export function projectsView() {
+  let tablesHtml = '';
+  
+  for (const [level, projects] of Object.entries(projectsData)) {
+    if (projects.length === 0) continue;
+    
+    const rows = projects.map(p => `
+      <tr>
+        <td><strong>${escape(p.name)}</strong></td>
+        <td><a href="${escape(p.link)}" target="_blank" class="comic-link">View Repo</a></td>
+        <td>${escape(p.stack)}</td>
+      </tr>
+    `).join('');
+
+    tablesHtml += `
+      <section class="project-section" style="margin-bottom: 3rem;">
+        <h2 class="section-title" style="font-size: 1.5rem; background: var(--ink); color: #fff; display: inline-block; padding: 4px 12px; margin-bottom: 12px; transform: skew(-5deg);">${level.charAt(0).toUpperCase() + level.slice(1)}</h2>
+        <table class="board">
+          <thead>
+            <tr><th>Repository Name</th><th>Link</th><th>Tech Stack</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>
+    `;
+  }
+
+  return layout({
+    title: 'Projects',
+    active: '/projects',
+    body: `
+<section class="page-head">
+  <p class="eyebrow">Start contributing</p>
+  <h1>Projects</h1>
+  <p>Choose your difficulty and find a repository to work on.</p>
+</section>
+<section class="narrow">
+  ${tablesHtml}
+</section>
+    `
+  });
+}
+
+export function getStartedView() {
+  // Replace this ID with the 11-character ID of your actual YouTube video
+  // const videoId = "dQw4w9WgXcQ"; 
+
+  return layout({
+    title: 'Get Started',
+    active: '/get-started',
+    body: `
+<section class="page-head">
+  <p class="eyebrow">Learn the ropes</p>
+  <h1>Get Started</h1>
+  <p>Watch the tutorial below to learn how to contribute to the event.</p>
+</section>
+<section class="narrow">
+  <div class="panel" style="padding: 0; overflow: hidden; border: 4px solid var(--ink); box-shadow: 8px 8px 0px var(--ink);">
+    <iframe width="100%" height="500" src="https://www.youtube.com/embed/IKkJVt8TQwA?si=dQdFWHbdTb7drkTc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</section>
+    `
+  });
+}
+
+export function rulesPage() {
+  return layout({
+    title: 'Rules & Guidelines',
+    active: '/rules',
+    body: `
+<section class="page-head">
+  <p class="eyebrow">Official Document</p>
+  <h1>Rules & Guidelines</h1>
+  <p>Guided Real-World Open-Source Contribution Sprint</p>
+</section>
+
+<section class="narrow" style="line-height: 1.6;">
+  <h2 class="sec">Document Information</h2>
+  <table class="board" style="margin-bottom: 2rem;">
+    <tbody>
+      <tr><td><strong>Event Name</strong></td><td>COMMIT-ED</td></tr>
+      <tr><td><strong>Event</strong></td><td>BMS Open Source Sprint 2026</td></tr>
+      <tr><td><strong>Event Model</strong></td><td>Guided real-world open-source contribution sprint</td></tr>
+      <tr><td><strong>Contribution Window</strong></td><td>Two-week sprint</td></tr>
+      <tr><td><strong>Scoring Deadline</strong></td><td>August 23, 2026 (as referenced in the event plan)</td></tr>
+      <tr><td><strong>Primary Audience</strong></td><td>Contributors, technical organisers, mentors and reviewers</td></tr>
+      <tr><td><strong>Purpose</strong></td><td>Provide a controlled, authentic and high-quality open-source contribution experience</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec">1. Event Overview</h2>
+  <h3>1.1 Purpose of the Sprint</h3>
+  <p>BMS Open Source Sprint 2026 is designed as a guided real-world open-source contribution sprint. Instead of limiting contributors to projects submitted by BMS students, the event will curate a fixed pool of active open-source repositories that are participating in programs such as GSSoC/SSoC or are actively accepting beginner and intermediate contributions.</p>
+  <p>The objective is not simply to produce code or collect GitHub activity. The primary objective is to help each participant experience as much of the authentic open-source workflow as possible: identifying a suitable issue, communicating professionally with maintainers, obtaining assignment or approval where required, implementing a solution, testing it, opening a pull request, responding to review comments, and ultimately getting the work accepted or merged.</p>
+  
+  <div class="score-callout">
+    <p><strong>Core Event Objective:</strong> Quality of contribution and understanding of the real open-source workflow are more important than the number of PRs submitted.</p>
+  </div>
+
+  <h3>1.2 Real Open-Source Workflow</h3>
+  <ol style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>Find a suitable issue in an approved repository.</li>
+    <li>Read the repository documentation and contribution guidelines.</li>
+    <li>Check whether the issue is already assigned or has an active PR.</li>
+    <li>Submit the issue through the BMS internal Issue Claim Form.</li>
+    <li>Wait for internal technical verification and difficulty assignment.</li>
+    <li>Follow the upstream repository's rules for assignment, proposals or PR submission.</li>
+    <li>Implement the solution and test it properly.</li>
+    <li>Open the pull request according to the upstream project's guidelines.</li>
+    <li>Submit the PR link through the BMS PR Submission Form.</li>
+    <li>Respond to maintainer feedback and track the contribution through the milestones.</li>
+  </ol>
+
+  <h2 class="sec">2. Approved Repository Pool</h2>
+  <p>Participants may initially contribute only to repositories approved by the organising and technical teams. The pool may be updated during the event if a maintainer becomes inactive, a repository stops accepting contributions, or a better contribution opportunity becomes available.</p>
+  
+  <h3>2.1 Beginner-Friendly Repositories</h3>
+  <table class="board" style="margin-bottom: 2rem;">
+    <thead><tr><th>Repository</th><th>Primary Technologies</th></tr></thead>
+    <tbody>
+      <tr><td>dhairyagothi/100_days_100_web_project</td><td>HTML / CSS / JavaScript</td></tr>
+      <tr><td>MRIARC-08/VidyaSetu</td><td>React / Next.js / AI</td></tr>
+      <tr><td>Venkat-Kolasani/FutureStack</td><td>React / JavaScript</td></tr>
+      <tr><td>12fahed/CertiNova</td><td>TypeScript</td></tr>
+      <tr><td>Mayur-Pagote/README_Design_Kit</td><td>Developer Documentation / Tooling</td></tr>
+      <tr><td>darshan2456/C_DSA_interactive_suite</td><td>C / DSA</td></tr>
+      <tr><td>PRODHOSH/gssoc-tracker</td><td>Next.js / TypeScript</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.2 Intermediate Repositories</h3>
+  <table class="board" style="margin-bottom: 2rem;">
+    <thead><tr><th>Repository</th><th>Primary Technologies</th></tr></thead>
+    <tbody>
+      <tr><td>Ruthwik000/tokenfirewall</td><td>TypeScript / LLM Infrastructure</td></tr>
+      <tr><td>im-anishraj/arnio</td><td>Python / Data Science / C++</td></tr>
+      <tr><td>riteshbonthalakoti/HELPDESK.AI</td><td>FastAPI / React / AI</td></tr>
+      <tr><td>kalyan-1845/ai-code-reviewer</td><td>AI / Security / Web</td></tr>
+      <tr><td>itzzavdhesh/VoiceForge</td><td>AI / Accessibility</td></tr>
+      <tr><td>SamXop123/samdev-pulse</td><td>JavaScript / GitHub API</td></tr>
+      <tr><td>Shivayan09/Vector-social-media</td><td>Next.js / Node.js / MongoDB</td></tr>
+      <tr><td>ManabBiswas/EkagraFocus</td><td>Electron / React / TypeScript</td></tr>
+      <tr><td>Abhigyan-Shekhar/Waggle-mcp</td><td>Python 3.11+, SQLite, Neo4j, MCP, React, Vite</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.3 Advanced Repositories</h3>
+  <table class="board" style="margin-bottom: 2rem;">
+    <thead><tr><th>Repository</th><th>Primary Technologies</th></tr></thead>
+    <tbody>
+      <tr><td>RatLoopz/sahidawa-india</td><td>Next.js / TypeScript / Security / Testing</td></tr>
+      <tr><td>NEXARA-oss/PulseStack</td><td>AI Infrastructure / Observability</td></tr>
+      <tr><td>OWASP-BLT/BLT</td><td>Python / Cybersecurity</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec">3. Mandatory Internal Approval System</h2>
+  <p>Participants must not randomly begin coding on issues. Every scoring contribution must first pass through the BMS internal approval process. This provides coordination, prevents duplicate work, protects external maintainers from unnecessary activity, and allows the technical team to assign a consistent internal difficulty level.</p>
+  
+  <h3>3.1 Issue Claim and Approval Process</h3>
+  <ol style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>Choose a repository from the approved repository pool.</li>
+    <li>Find an existing open issue suitable for your skill level.</li>
+    <li>Check whether another contributor is already assigned or has opened a PR.</li>
+    <li>Read the repository's README, CONTRIBUTING guidelines, issue instructions and relevant documentation.</li>
+    <li>Submit the issue to the BMS internal Issue Claim Form.</li>
+    <li>The technical team verifies the issue and approves the claim.</li>
+    <li>After approval, contact the upstream maintainer or request assignment according to that repository's rules.</li>
+    <li>Begin implementation only after satisfying the upstream project's requirements.</li>
+    <li>Open a legitimate, tested PR and submit its link through the BMS PR Submission Form.</li>
+    <li>The organising team tracks milestones according to the scoring system.</li>
+  </ol>
+  
+  <div class="score-callout">
+    <p><strong>Important:</strong> Internal approval does not replace upstream approval. It only coordinates BMS participants and validates the task for event scoring.</p>
+  </div>
+
+  <h2 class="sec">4. Upstream Repository Rules Take Priority</h2>
+  <p>Every contribution must comply with the contribution policy of the external repository. BMS Open Source Sprint rules cannot override the rules established by repository maintainers.</p>
+  <table class="board" style="margin-bottom: 2rem;">
+    <thead><tr><th>If the repository says...</th><th>The contributor must...</th></tr></thead>
+    <tbody>
+      <tr><td>Ask for assignment before working</td><td>Wait for and obtain assignment before starting implementation.</td></tr>
+      <tr><td>Do not ask for assignment; submit a PR</td><td>Follow that workflow instead of requesting assignment.</td></tr>
+      <tr><td>Submit an implementation proposal first</td><td>Prepare and submit the required proposal before coding.</td></tr>
+      <tr><td>No drive-by/event contributions</td><td>Do not contribute; the organising team should remove it from the approved pool.</td></tr>
+    </tbody>
+  </table>
+  <p>Contributors are expected to communicate respectfully with maintainers, follow repository etiquette, and never use the event as a reason to pressure maintainers into accepting work.</p>
+
+  <h2 class="sec">5. Contribution Tracks</h2>
+  <h3>5.1 Track A — First Open-Source Contribution</h3>
+  <p>This track is intended for beginners experiencing authentic open source for the first time. The goal is to complete one proper contribution lifecycle rather than maximize the number of PRs.</p>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Small bug fixes</li>
+    <li>Good-first issues</li>
+    <li>Tests and test improvements</li>
+    <li>Documentation improvements</li>
+    <li>UI fixes</li>
+    <li>Validation fixes</li>
+    <li>Accessibility improvements</li>
+  </ul>
+
+  <h3>5.2 Track B — Open Source Challenge</h3>
+  <p>This track is intended for experienced contributors ready to attempt technically deeper work.</p>
+  <ul style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>Intermediate bugs</li>
+    <li>New features</li>
+    <li>Performance improvements</li>
+    <li>Testing infrastructure</li>
+    <li>CI/CD improvements</li>
+    <li>Security fixes</li>
+    <li>Backend integrations</li>
+    <li>Larger technical contributions</li>
+  </ul>
+  <p>Both tracks participate in the same leaderboard. Difficulty and technical scope determine the recognition awarded.</p>
+
+  <h2 class="sec">6. Issues Created by Contributors</h2>
+  <p>Participants may discover genuine bugs or useful feature requests that are not already documented. Simply opening an issue is not enough, preventing unnecessary issue creation and protecting external repositories from spam.</p>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Maintainer confirms it is a genuine bug.</li>
+    <li>Maintainer applies a relevant label.</li>
+    <li>Maintainer explicitly confirms the issue as valid.</li>
+    <li>Maintainer accepts the feature request.</li>
+    <li>The issue directly leads to an accepted PR.</li>
+  </ul>
+  <p style="margin-bottom: 2rem;">A high-quality, externally validated issue may be approved for credit after verification by the BMS technical team.</p>
+
+  <h2 class="sec">7. Activities That Do Not Count</h2>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Starring repositories</li>
+    <li>Forking repositories</li>
+    <li>Random GitHub comments</li>
+    <li>Opening unnecessary issues</li>
+    <li>Typo-only PRs</li>
+    <li>Adding your name to contributor files</li>
+    <li>README formatting-only changes</li>
+    <li>Artificially splitting one task into several PRs</li>
+    <li>Submitting code without testing</li>
+    <li>PRs rejected as spam</li>
+    <li>PRs copied from existing contributors</li>
+    <li>AI-generated PRs that the contributor cannot explain</li>
+    <li>Repositories where the only contribution is adding your name as a first contribution</li>
+  </ul>
+  <div class="score-callout" style="margin-bottom: 2rem;"><p><strong>Quality > Quantity:</strong> The event rewards meaningful software contributions and authentic open-source participation, not raw GitHub activity.</p></div>
+
+  <h2 class="sec">8. Artificial Intelligence (AI) Policy</h2>
+  <p>AI tools may be used as learning and development assistants, but participants remain fully responsible for the code and content they submit. Every contributor must understand, test and be able to explain their contribution.</p>
+  
+  <h3>8.1 Permitted Uses</h3>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Learning and understanding unfamiliar concepts</li>
+    <li>Understanding existing code</li>
+    <li>Debugging assistance</li>
+    <li>Brainstorming possible approaches</li>
+    <li>Test generation assistance</li>
+    <li>Documentation assistance</li>
+  </ul>
+
+  <h3>8.2 Verification of Suspicious Contributions</h3>
+  <p>If a PR appears suspicious, excessively generated, copied, or inconsistent with the contributor's demonstrated understanding, the technical team may ask the contributor to:</p>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Explain the issue and intended solution.</li>
+    <li>Explain the submitted code and important functions.</li>
+    <li>Run the project and demonstrate the change.</li>
+    <li>Explain important design decisions.</li>
+    <li>Make a small live modification to demonstrate understanding.</li>
+  </ul>
+  <p style="margin-bottom: 2rem;">If the contributor cannot explain or demonstrate the contribution, it may be rejected from event scoring. Repeated AI-spam, plagiarism, or deliberate misrepresentation may result in disqualification.</p>
+
+  <h2 class="sec">9. Issue Claiming Limits and Inactivity</h2>
+  <ul style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>To prevent contributors from reserving large numbers of issues without working on them, the event will initially allow one active scoring issue per contributor.</li>
+    <li>A contributor may request another issue after their first PR has been submitted or the current contribution is meaningfully progressing.</li>
+    <li>Contributors should provide updates when work is delayed or blocked.</li>
+    <li>If a contributor remains inactive for 48 hours without an update, the internal claim may be released for another participant.</li>
+    <li>Releasing an inactive claim is intended to keep the issue pool available to active contributors and does not automatically imply misconduct.</li>
+  </ul>
+
+  <h2 class="sec">10. Event Operations and Tracking</h2>
+  <h3>10.1 Internal Systems</h3>
+  <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+    <li>Issue Claim Form — request an issue for internal verification.</li>
+    <li>PR Submission Form — submit PR links and trigger milestone tracking.</li>
+    <li>Leaderboard Sheet/Database — record validated milestones.</li>
+    <li>Contributor Communication Group — announcements, support and coordination.</li>
+    <li>Technical Domain Assignments — organisers/mentors assigned to Web, Python, AI, C/C++, Cybersecurity and other domains.</li>
+  </ul>
+
+  <h3>10.2 Recommended Contribution Record</h3>
+  <table class="board" style="margin-bottom: 2rem;">
+    <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Contributor ID / Name</td><td>Identify the participant</td></tr>
+      <tr><td>Repository</td><td>Track the external project</td></tr>
+      <tr><td>Issue Number / Link</td><td>Identify the claimed task</td></tr>
+      <tr><td>Internal Difficulty</td><td>Record Level 1–4</td></tr>
+      <tr><td>Claim Date</td><td>Track when work was approved</td></tr>
+      <tr><td>PR Link</td><td>Track the submitted contribution</td></tr>
+      <tr><td>Testing / CI Status</td><td>Verify quality milestone</td></tr>
+      <tr><td>Maintainer Review</td><td>Record external review</td></tr>
+      <tr><td>Review Addressed</td><td>Record response to feedback</td></tr>
+      <tr><td>Approval / Merge</td><td>Record upstream outcome</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec">11. Contributor Code of Conduct and Etiquette</h2>
+  <ul style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>Communicate respectfully with maintainers and other contributors.</li>
+    <li>Read repository documentation before asking questions.</li>
+    <li>Do not repeatedly ping or pressure maintainers for assignment or review.</li>
+    <li>Do not claim an issue already assigned to someone else.</li>
+    <li>Do not submit unfinished or untested code.</li>
+    <li>Clearly communicate blockers to the BMS technical team.</li>
+    <li>Respect the external project's contribution guidelines, license and code of conduct.</li>
+    <li>Represent BMSCE professionally in all external project interactions.</li>
+  </ul>
+
+  <h2 class="sec">12. Quality Control and Disqualification</h2>
+  <p>The organising and technical teams may reject event credit for contributions that are clearly low-quality, misleading, duplicated, spam-like, plagiarized, artificially inflated, or inconsistent with the event rules.</p>
+  <ul style="margin-bottom: 2rem; padding-left: 1.5rem;">
+    <li>Duplicate or competing contributions may be rejected from scoring.</li>
+    <li>Spam PRs or unnecessary issues will be rejected.</li>
+    <li>Plagiarized or copied contributions may result in disqualification.</li>
+    <li>Repeated inability to explain submitted work may result in disqualification under the AI policy.</li>
+    <li>Attempts to manipulate the leaderboard or split one task artificially may result in submission cancellation and further review.</li>
+  </ul>
+
+  <h2 class="sec">13. Final Event Principle</h2>
+  <div class="score-callout" style="margin-bottom: 2rem;">
+    <p><strong>The goal is not to create the most PRs.</strong> The goal is to help every participant experience authentic open-source contribution: finding a real problem, communicating with a real maintainer, writing and testing a real solution, receiving feedback, improving the work, and contributing responsibly to a real project.</p>
+  </div>
+</section>
+    `
   });
 }

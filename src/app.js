@@ -37,9 +37,10 @@ import {
   errorPage,
   homePage,
   leaderboardPage,
-  projectsPage,
   submitPage,
 } from './views.js';
+
+import { layout, projectsView, getStartedView, rulesPage } from './views.js';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -148,6 +149,9 @@ function requireAdmin(req, res) {
 
 const routes = {
   'GET /': async (req, res) => send(res, 200, homePage({ stats: await stats() })),
+  'GET /projects': async (req, res) => send(res, 200, projectsView()),
+  'GET /get-started': async (req, res) => send(res, 200, getStartedView()),
+  'GET /rules': async (req, res) => send(res, 200, rulesPage()),
   'GET /badge': async (req, res) => send(res, 200, badgePage()),
 
   // Health check for the host: proves the process is up and the database reads.
@@ -157,24 +161,6 @@ const routes = {
   },
   'GET /leaderboard': async (req, res) =>
     send(res, 200, leaderboardPage({ rows: await leaderboard() })),
-
-  'GET /projects': async (req, res) => {
-    const rawProjects = await submittedRepositories();
-    const projects = await Promise.all(
-      rawProjects.map(async (p) => {
-        const details = await fetchRepoDetails(p.owner, p.repo);
-        return {
-          ...p,
-          description: details.description,
-          language: details.language,
-          topics: details.topics,
-          techStack: details.techStack,
-          stars: details.stars,
-        };
-      }),
-    );
-    send(res, 200, projectsPage({ projects }));
-  },
 
   'GET /submit': async (req, res) =>
     send(res, 200, submitPage({ values: {}, success: '' })),
