@@ -268,6 +268,7 @@ async function handleReview(req, res, id) {
 
   const note = String(form.get('note') || '').trim().slice(0, 300);
 
+
   // The label decides the score; approving is the organiser's stamp on it.
   const row = await getSubmission(id);
   if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
