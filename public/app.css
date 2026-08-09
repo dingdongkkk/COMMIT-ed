@@ -169,6 +169,8 @@ main {
   text-decoration: none;
   font-size: 20px;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex: 0 0 auto;
   position: relative;
   transition: transform 0.3s var(--ease-snap);
 }
@@ -227,6 +229,8 @@ main {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   padding: 9px 18px;
+  white-space: nowrap;
+  flex: 0 0 auto;
   border: 3px solid var(--ink);
   border-radius: 999px;
   box-shadow: 4px 4px 0 var(--ink);
@@ -1069,8 +1073,34 @@ input:focus, select:focus {
 .pts-in { width: 118px; }
 .note-in { flex: 1; min-width: 200px; }
 
+@media (max-width: 1240px) {
+  .site-head { gap: 16px; }
+  .site-head nav { gap: 15px; }
+  .site-head nav a { font-size: 13px; }
+}
+
 @media (max-width: 860px) {
   .hero, .badge-layout { grid-template-columns: 1fr; }
+
+  /* A wide table becomes scrollable rather than running off the page. The
+     page clips horizontal overflow, so without this the far columns are
+     unreachable, not merely off-screen. */
+  .board {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .board td, .board th { padding: 10px 12px; }
+  /* Repository names and URLs have no spaces to break at, so let them wrap
+     anywhere rather than forcing the whole table to scroll. */
+  .board td { overflow-wrap: anywhere; }
+  .board .pr a, .board .pr-link { word-break: break-all; }
+  /* …except the action link, which reads badly split across two lines. */
+  .board .comic-link { white-space: nowrap; }
+
+  /* The header row gets crowded once the logos are in the flow. */
+  .site-head { gap: 10px; row-gap: 8px; }
+  .site-head nav { gap: 16px; }
   .hero { padding-bottom: clamp(150px, 42vw, 260px); }
   /* Zoom the city in so the towers still read at phone widths. */
   .skyline { width: 170vw; }
@@ -1088,10 +1118,16 @@ input:focus, select:focus {
 }
 
 @media (max-width: 520px) {
-  .site-head nav { gap: 14px; }
-  .site-head nav a { font-size: 12px; }
-  .brand { font-size: 17px; }
-  .cta { font-size: 12px; padding: 8px 14px; }
+  .site-head .cta { display: none; }
+  .site-head nav { gap: 12px; }
+  .site-head nav a { font-size: 11px; }
+  .brand { font-size: 15px; }
+  .cta { font-size: 11px; padding: 7px 12px; border-width: 2.5px; }
+  .logo-left { height: 26px; }
+  .logo-right { height: 22px; }
+  /* Long prose tables read better slightly tighter. */
+  .board { font-size: 13px; }
+  .board td, .board th { padding: 9px 10px; }
 }
 
 /* ---------- projects page ---------- */
@@ -1402,23 +1438,19 @@ input:focus, select:focus {
 }
 
 /* Shared Navigation Logo Properties */
+/* ---------- navbar logos ---------- */
+
+/**
+ * These sit in the flex row rather than absolutely positioned. Absolute
+ * placement ignored the brand and the CTA, so at every width the logos sat on
+ * top of them; in the flow they push the row instead of covering it.
+ */
 .nav-logo {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  flex: 0 0 auto;
   width: auto;
   object-fit: contain;
-  /* Removed 'height' from here so they can be sized individually */
+  display: block;
 }
 
-/* Top Left Logo */
-.logo-left {
-  left: 20px;
-  height: 65px; /* Increase this number until the visual weight matches the right logo */
-}
-
-/* Top Right Logo */
-.logo-right {
-  right: 20px;
-  height: 45px; /* Kept at the original size that looked correct */
-}
+.logo-left { height: clamp(26px, 5.5vw, 56px); }
+.logo-right { height: clamp(22px, 4.4vw, 42px); }
