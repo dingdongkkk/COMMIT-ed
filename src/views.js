@@ -277,19 +277,19 @@ export function badgePage({ step = 'verify', username = '', error = '' } = {}) {
     <label>
       Suit theme
       <span class="swatches" id="f-theme">
-        <button type="button" class="sw selected" title="Spider-Gwen"
+        <button type="button" class="sw selected" title="Spider-Gwen" data-image="/badges/gwen.png"
                 data-accent="#ff4fa3" data-secondary="#37e6e6"
                 data-bg1="#241344" data-bg2="#0d0620"
                 style="--sw:#ff4fa3; --sw2:#37e6e6"><span>Gwen</span></button>
-        <button type="button" class="sw" title="Miles Morales"
+        <button type="button" class="sw" title="Miles Morales" data-image="/badges/miles.png"
                 data-accent="#ff2b4d" data-secondary="#a855f7"
                 data-bg1="#16101f" data-bg2="#07060c"
                 style="--sw:#ff2b4d; --sw2:#a855f7"><span>Miles</span></button>
-        <button type="button" class="sw" title="Pavitr Prabhakar"
+        <button type="button" class="sw" title="Pavitr Prabhakar" data-image="/badges/pavitr.png"
                 data-accent="#ffb020" data-secondary="#29c4c4"
                 data-bg1="#23163d" data-bg2="#0e0820"
                 style="--sw:#ffb020; --sw2:#29c4c4"><span>Pavitr</span></button>
-        <button type="button" class="sw" title="Peter Parker"
+        <button type="button" class="sw" title="Peter Parker" data-image="/badges/peter.png"
                 data-accent="#e01b24" data-secondary="#3d5ce0"
                 data-bg1="#141a3d" data-bg2="#07091a"
                 style="--sw:#e01b24; --sw2:#3d5ce0"><span>Peter</span></button>

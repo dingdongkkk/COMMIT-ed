@@ -7,6 +7,7 @@
   ],
   "routes": [
     { "src": "/(app\\.css|fx\\.js|badge\\.js)", "dest": "/public/$1" },
+    { "src": "/badges/(.*)", "dest": "/public/badges/$1" },
     { "src": "/(.*)", "dest": "/api/index.js" }
   ]
 }

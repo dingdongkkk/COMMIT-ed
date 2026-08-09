@@ -11,8 +11,57 @@ const themeBox = document.getElementById('f-theme');
 const hint = document.getElementById('badge-hint');
 
 const THEMES = {
-  gwen: { accent: '#ff4fa3', secondary: '#37e6e6', bg1: '#241344', bg2: '#0d0620' },
+  gwen: {
+    accent: '#ff4fa3',
+    secondary: '#37e6e6',
+    bg1: '#241344',
+    bg2: '#0d0620',
+    image: '/badges/gwen.png',
+  },
 };
+
+/**
+ * Background art per suit, loaded from our own origin so the canvas stays
+ * exportable. A missing file is not an error — the theme just keeps its
+ * gradient, which is why the badge still works before any art is added.
+ */
+const artCache = new Map();
+let art = null;
+
+function loadArt(src) {
+  if (!src) {
+    art = null;
+    return;
+  }
+  if (artCache.has(src)) {
+    art = artCache.get(src);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    artCache.set(src, img);
+    if (state.theme.image === src) {
+      art = img;
+      draw();
+    }
+  };
+  img.onerror = () => {
+    artCache.set(src, null);
+    if (state.theme.image === src) {
+      art = null;
+      draw();
+    }
+  };
+  img.src = src;
+}
+
+/** Centre-crop to fill the card: never squashed, never letterboxed. */
+function drawArt(image) {
+  const scale = Math.max(W / image.width, H / image.height);
+  const w = image.width * scale;
+  const h = image.height * scale;
+  ctx.drawImage(image, (W - w) / 2, (H - h) / 2, w, h);
+}
 
 const state = {
   name: '',
@@ -195,6 +244,18 @@ function draw() {
   roundRect(0, 0, W, H, 30);
   ctx.clip();
 
+  if (art) {
+    drawArt(art);
+    // Heavier on the left where the name and avatar sit, lighter on the right
+    // so the artwork still reads.
+    const scrim = ctx.createLinearGradient(0, 0, W, 0);
+    scrim.addColorStop(0, hexToRgba(bg2, 0.94));
+    scrim.addColorStop(0.55, hexToRgba(bg2, 0.78));
+    scrim.addColorStop(1, hexToRgba(bg2, 0.42));
+    ctx.fillStyle = scrim;
+    ctx.fillRect(0, 0, W, H);
+  }
+
   // Suit glow top right, webbing glow bottom left
   const glow = ctx.createRadialGradient(W - 100, -40, 20, W - 100, -40, 560);
   glow.addColorStop(0, hexToRgba(accent, 0.42));
@@ -344,7 +405,10 @@ function applyTheme(button) {
     secondary: button.dataset.secondary,
     bg1: button.dataset.bg1,
     bg2: button.dataset.bg2,
+    image: button.dataset.image || null,
   };
+  art = null;
+  loadArt(state.theme.image);
   draw();
 }
 

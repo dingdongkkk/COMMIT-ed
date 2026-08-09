@@ -71,6 +71,7 @@ src/
   validate.js   input rules
   views.js      HTML templates
 public/
+  badges/       background art per suit theme (see its README)
   app.css       styles — comic web-slinger theme, all animation/hover states
   fx.js         motion layer — scroll reveals, count-ups, cursor reticle, tilt
   badge.js      canvas badge generator
@@ -90,7 +91,8 @@ screen at load skips its reveal, and the whole motion layer switches itself off 
 `prefers-reduced-motion`.
 
 The badge offers four suit themes — Gwen, Miles, Pavitr and Peter — each with its own
-accent, webbing colour and card tones. Everyone on a badge is a **Contributor**; there is
+accent, webbing colour, card tones and optional background art dropped into
+[public/badges/](public/badges/). A theme with no art file falls back to its gradient. Everyone on a badge is a **Contributor**; there is
 no role picker.
 
 ## Deploy
