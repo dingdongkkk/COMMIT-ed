@@ -18,7 +18,6 @@ import {
   stats,
 } from './db.js';
 import { fetchPrLabels, fetchRepoDetails } from './github.js';
-import { scoreLabels } from './points.js';
 import {
   clearSession,
   clientIp,
@@ -38,9 +37,10 @@ import {
   homePage,
   leaderboardPage,
   submitPage,
+  projectsView, 
+  getStartedView, 
+  rulesPage
 } from './views.js';
-
-import { layout, projectsView, getStartedView, rulesPage } from './views.js';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -174,6 +174,7 @@ const routes = {
     const { participants } = await stats();
     send(res, 200, `ok ${participants}`, { 'Content-Type': 'text/plain; charset=utf-8' });
   },
+  
   'GET /leaderboard': async (req, res) =>
     send(res, 200, leaderboardPage({ rows: await leaderboard() })),
 
@@ -212,19 +213,20 @@ const routes = {
       throw err;
     }
 
-    // Read the difficulty label now so the contributor sees what it is worth.
-    const lookup = await fetchPrLabels(prUrl.value);
-    const { labels } = lookup;
-    await saveLabels(submissionId, labels, lookup.error);
-    const { tier, points } = scoreLabels(labels);
+    try {
+      // Attempt to fetch labels for the admin panel, but do not crash if it fails
+      const lookup = await fetchPrLabels(prUrl.value);
+      await saveLabels(submissionId, lookup.labels || [], lookup.error);
+    } catch (err) {
+      console.error('Label fetch failed, proceeding anyway:', err);
+    }
 
     return send(
       res,
       200,
       submitPage({
         values: {},
-        success: 'Submitted — your pull request is now waiting for an organiser to check it.',
-        scored: { tier, points, labels, error: lookup.error },
+        success: 'PR successfully submitted! It is now waiting for an organiser to check it.',
       }),
     );
   },
@@ -289,11 +291,11 @@ async function handleReview(req, res, id) {
 
   const note = String(form.get('note') || '').trim().slice(0, 300);
 
-
-  // The label decides the score; approving is the organiser's stamp on it.
   const row = await getSubmission(id);
   if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
-  const points = action === 'approve' ? scoreLabels(readLabels(row)).points : 0;
+  
+  // Read points from the admin's manual input
+  const points = action === 'approve' ? parseInt(form.get('points') || '0', 10) : 0;
 
   const outcome = await reviewSubmission(id, {
     status: action === 'approve' ? 'approved' : 'rejected',
@@ -333,7 +335,9 @@ async function handleAdjust(req, res, id) {
   const note = String(form.get('note') || '').trim().slice(0, 300);
   const row = await getSubmission(id);
   if (!row) return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
-  const points = action === 'restore' ? scoreLabels(readLabels(row)).points : 0;
+  
+  // Restore the points that were already written to the database
+  const points = action === 'restore' ? row.points : 0;
 
   const outcome = await adjustSubmission(id, {
     status: action === 'restore' ? 'approved' : 'rejected',

@@ -1,8 +1,4 @@
-import { POINTS } from './points.js';
 import { readLabels } from './db.js';
-import { scoreSummary } from './points.js';
-
-
 
 export function escape(value) {
   return String(value ?? '')
@@ -96,7 +92,7 @@ ${body}
 </main>
 <footer class="site-foot">
   <span>COMMIT-ed · build in public with your campus community</span>
-  <a href="https://protocolbmsce.in/core">About us</a>
+  <a href="https://protocolbmsce.in/core" target="_blank" rel="noopener noreferrer">About us</a>
 </footer>
 <script src="/fx.js?v=${V}" defer></script>
 ${scripts}
@@ -262,11 +258,10 @@ season.<span class="f">on</span>(<span class="s">'pull_request'</span>, () =&gt;
     <p>Approved points stack up. Ties break in favour of whoever got there first.</p>
     <a href="/leaderboard">View leaderboard →</a>
   </article>
-  <!-- New Rules Card -->
   <article class="card">
     <span class="tag">The Law</span>
     <h2>Rules & Guidelines</h2>
-    <p>Read the official event rules, contribution guidelines, and understand the real open-source workflow we follow.[cite: 3]</p>
+    <p>Read the official event rules, contribution guidelines, and understand the real open-source workflow we follow.</p>
     <a href="/rules">Read the rules →</a>
   </article>
 </section>`,
@@ -328,6 +323,15 @@ export function badgePage({ step = 'verify', username = '', error = '' } = {}) {
       <input id="f-username" name="username" value="${escape(username)}" readonly>
     </label>
     <label>
+      Role on the badge
+      <select id="f-role">
+        <option value="Contributor">Contributor</option>
+        <option value="Maintainer">Maintainer</option>
+        <option value="Mentor">Mentor</option>
+        <option value="Campus Lead">Campus Lead</option>
+      </select>
+    </label>
+    <label>
       Suit theme
       <span class="swatches" id="f-theme">
         <button type="button" class="sw selected" title="Spider-Gwen" data-image="/badges/gwen.png"
@@ -366,25 +370,7 @@ export function badgePage({ step = 'verify', username = '', error = '' } = {}) {
   });
 }
 
-function scoreCallout(scored) {
-  if (!scored) return '';
-  const chips = scored.labels.length
-    ? `<p class="chips">${scored.labels
-        .map((l) => `<span class="chip">${escape(l)}</span>`)
-        .join('')}</p>`
-    : '';
-  const line = scored.tier
-    ? `This pull request is labelled <strong>${escape(scored.tier)}</strong> — worth
-       <strong>${scored.points} points</strong> once an organiser approves it.`
-    : escape(
-        scored.error ||
-          'No difficulty label on it yet. Once the project admin adds one, it will be worth ' +
-            'points — an organiser re-checks at review time.',
-      );
-  return `<div class="score-callout"><p>${line}</p>${chips}</div>`;
-}
-
-export function submitPage({ values = {}, error = '', success = '', scored = null } = {}) {
+export function submitPage({ values = {}, error = '', success = '' } = {}) {
   return layout({
     title: 'Submit a pull request',
     active: '/submit',
@@ -392,14 +378,12 @@ export function submitPage({ values = {}, error = '', success = '', scored = nul
 <section class="page-head">
   <p class="eyebrow">For contributors</p>
   <h1>Submit your pull request</h1>
-  <p>One link per pull request. We read its difficulty label to work out the points; an
-     organiser then checks the work and approves it.</p>
+  <p>One link per pull request. An organiser will check the work and assign points manually based on its complexity.</p>
 </section>
 
 <section class="narrow">
   ${flash(error, 'error')}
   ${flash(success, 'ok')}
-  ${scoreCallout(scored)}
   <form class="panel" method="post" action="/submit">
     <label>
       <span>Your name <span class="opt">(optional)</span></span>
@@ -419,17 +403,11 @@ export function submitPage({ values = {}, error = '', success = '', scored = nul
              placeholder="https://github.com/owner/repo/pull/123">
     </label>
     <button class="btn primary" type="submit">Submit for review</button>
-    <p class="hint">Points come from the difficulty label the project admin put on your pull
-       request — <strong>easy ${POINTS.easy}</strong>, <strong>medium ${POINTS.medium}</strong>,
-       <strong>hard ${POINTS.hard}</strong>. Nothing counts until an organiser checks the work
-       and approves it.</p>
   </form>
 </section>`,
     scripts: `<script src="/submit.js?v=${V}" defer></script>`,
   });
 }
-
-
 
 export function leaderboardPage({ rows }) {
   const body =
@@ -498,9 +476,26 @@ function labelChips(labels) {
 
 function submissionRow(s, csrf) {
   const labels = readLabels(s);
-  const score = scoreSummary(labels, s.label_error);
-  return `<form class="review" method="post" action="/admin/submissions/${s.id}/review">
+  
+  const techTeam = [
+    "Avish Jain", "Anubhav Kumar", "Akshith N", "Kumkum Amarnath",
+    "Tanya Pandey", "Kavyadeep Dev", "Adarsh A Ladwa", "Vishnu Mashalkar",
+    "Shreya Ravish", "Arnav Kumar", "Parv D Parekh", "Adarsh KP"
+  ];
+  const options = techTeam.map(name => `<option value="${name}">${name}</option>`).join('');
+
+  return `<form class="review" method="post" action="/admin/submissions/${s.id}/review" style="position: relative;">
   <input type="hidden" name="csrf" value="${escape(csrf)}">
+  
+  <!-- Assignee Dropdown -->
+  <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 8px; align-items: center; background: #fff; padding: 4px 8px; border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); z-index: 10;">
+    <label style="font-weight: 900; font-size: 0.85rem; text-transform: uppercase;">Assign to:</label>
+    <select class="assignee-select" data-id="${s.id}" style="border: 2px solid var(--ink); font-family: inherit; font-size: 0.9rem; padding: 2px; cursor: pointer; background: #fff;">
+      <option value="" disabled selected>Select reviewer...</option>
+      ${options}
+    </select>
+  </div>
+
   <div class="review-who">
     <img src="https://avatars.githubusercontent.com/${escape(s.github_username)}?s=64"
          alt="" width="36" height="36" loading="lazy"
@@ -513,17 +508,19 @@ function submissionRow(s, csrf) {
   <a class="pr-link" href="${escape(s.pr_url)}" target="_blank" rel="noopener noreferrer">
     ${escape(s.pr_url)} ↗
   </a>
-  <div class="score-row">
-    <span class="worth ${score.tier ? 'has-tier' : 'no-tier'}">${score.points} pts</span>
+  <div class="score-row" style="margin-top: 12px; margin-bottom: 12px;">
     <span class="chips">${labelChips(labels)}</span>
-    <span class="score-note">${escape(score.tier ? `labelled ${score.tier}` : score.text)}</span>
   </div>
   <div class="review-controls">
+    <!-- Manual Points Input -->
+    <label class="note-in" style="max-width: 90px;"><span>Points</span>
+      <input type="number" name="points" min="0" required placeholder="0">
+    </label>
     <label class="note-in"><span>Note <span class="opt">(optional)</span></span>
       <input name="note" maxlength="300" value="${escape(s.note)}" placeholder="Reason, context…">
     </label>
     <button class="btn primary" name="action" value="approve" type="submit">
-      Approve ${score.points} pts
+      Approve
     </button>
     <button class="btn danger" name="action" value="reject" type="submit">Reject</button>
   </div>
@@ -536,7 +533,6 @@ function submissionRow(s, csrf) {
 
 function reviewedRow(s, csrf) {
   const labels = readLabels(s);
-  const score = scoreSummary(labels, s.label_error);
   return `<tr class="st-${escape(s.status)}">
   <td><a href="https://github.com/${escape(s.github_username)}" target="_blank"
          rel="noopener noreferrer">@${escape(s.github_username)}</a></td>
@@ -554,9 +550,7 @@ function reviewedRow(s, csrf) {
       ${
         s.status === 'approved'
           ? `<button class="btn small danger" name="action" value="revoke" type="submit">Revoke</button>`
-          : `<button class="btn small primary" name="action" value="restore" type="submit">
-               Approve ${score.points} pts
-             </button>`
+          : `<button class="btn small primary" name="action" value="restore" type="submit">Restore</button>`
       }
     </form>
   </td>
@@ -567,13 +561,37 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
   return layout({
     title: 'Admin',
     active: '',
+    scripts: `
+<script>
+  // Lock the tech team dropdown menu to prevent changes after assignment
+  document.querySelectorAll('.assignee-select').forEach(select => {
+    const subId = select.getAttribute('data-id');
+    const savedAssignee = localStorage.getItem('assignee_' + subId);
+    
+    if (savedAssignee) {
+      select.value = savedAssignee;
+      select.disabled = true;
+      select.style.backgroundColor = '#e0e0e0';
+      select.style.pointerEvents = 'none';
+    }
+
+    select.addEventListener('change', function() {
+      if (this.value) {
+        localStorage.setItem('assignee_' + subId, this.value);
+        this.disabled = true;
+        this.style.backgroundColor = '#e0e0e0';
+        this.style.pointerEvents = 'none';
+      }
+    });
+  });
+</script>
+    `,
     body: `
 <section class="page-head admin-head">
   <div>
     <p class="eyebrow">Review queue</p>
     <h1>Admin</h1>
-    <p>Points come from the pull request's difficulty label — easy ${POINTS.easy}, medium
-     ${POINTS.medium}, hard ${POINTS.hard}. Open each one, check the work is real, then
+    <p>Open each one, check the work is real, assign points manually, then
      approve or reject it.</p>
   </div>
   <form method="post" action="/admin/logout">
@@ -600,7 +618,7 @@ export function adminPage({ pending, reviewed, stats, csrf, flash: msg = '' }) {
 
   <h2 class="sec">Reviewed (${reviewed.length})</h2>
   <p class="hint" style="margin:-6px 0 14px">Revoking pulls the points off the leaderboard
-     immediately. Reinstating re-reads the label and awards it again.</p>
+     immediately. Restoring applies the points that were originally assigned.</p>
   ${
     reviewed.length === 0
       ? '<p class="empty">Nothing reviewed yet.</p>'
@@ -624,7 +642,6 @@ export function errorPage(status, message, back = '/') {
       </section>`,
   });
 }
-
 
 export function projectsView() {
   let tablesHtml = '';
@@ -670,9 +687,6 @@ export function projectsView() {
 }
 
 export function getStartedView() {
-  // Replace this ID with the 11-character ID of your actual YouTube video
-  // const videoId = "dQw4w9WgXcQ"; 
-
   return layout({
     title: 'Get Started',
     active: '/get-started',
@@ -684,7 +698,7 @@ export function getStartedView() {
 </section>
 <section class="narrow">
   <div class="panel" style="padding: 0; overflow: hidden; border: 4px solid var(--ink); box-shadow: 8px 8px 0px var(--ink);">
-    <iframe width="100%" height="500" src="https://www.youtube.com/embed/IKkJVt8TQwA?si=dQdFWHbdTb7drkTc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe width="100%" height="500" src="https://www.youtube.com/embed/IKkJVt8TQwA?autoplay=1&mute=1&si=dQdFWHbdTb7drkTc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block;"></iframe>
   </div>
 </section>
     `
