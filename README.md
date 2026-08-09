@@ -23,7 +23,7 @@ can revoke an approved score at any time, and reinstate it later.
 | Route | Access | Does |
 |---|---|---|
 | `/` | public | Landing page with live counts |
-| `/badge` | public | Name + GitHub handle → contributor card, downloadable as PNG |
+| `/badge` | public | Verifies the handle against the season list, then renders a downloadable contributor card |
 | `/submit` | public | Form: GitHub username + PR link → saved as `pending` |
 | `/leaderboard` | public | Participants ranked by total approved points |
 | `/admin` | password | Pending submissions, a points box, approve/reject |
@@ -90,7 +90,8 @@ screen at load skips its reveal, and the whole motion layer switches itself off 
 `prefers-reduced-motion`.
 
 The badge offers four suit themes — Gwen, Miles, Pavitr and Peter — each with its own
-accent, webbing colour and card tones.
+accent, webbing colour and card tones. Everyone on a badge is a **Contributor**; there is
+no role picker.
 
 ## Deploy
 

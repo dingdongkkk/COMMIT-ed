@@ -7,7 +7,6 @@ const H = canvas.height;
 
 const nameInput = document.getElementById('f-name');
 const userInput = document.getElementById('f-username');
-const roleInput = document.getElementById('f-role');
 const themeBox = document.getElementById('f-theme');
 const hint = document.getElementById('badge-hint');
 
@@ -18,6 +17,7 @@ const THEMES = {
 const state = {
   name: '',
   username: '',
+  // The only role on a badge; everyone in the season is a contributor.
   role: 'Contributor',
   // Overwritten by the selected chip; Spider-Gwen is the default suit.
   theme: THEMES.gwen,
@@ -319,7 +319,6 @@ function draw() {
 function sync() {
   state.name = nameInput.value.trim().replace(/\s+/g, ' ').slice(0, 60);
   const username = userInput.value.trim().replace(/^@/, '');
-  state.role = roleInput.value;
   if (username !== state.username) {
     state.username = username;
     avatar = null;
@@ -330,7 +329,7 @@ function sync() {
 }
 
 let debounce;
-for (const el of [nameInput, userInput, roleInput]) {
+for (const el of [nameInput, userInput]) {
   el.addEventListener('input', () => {
     clearTimeout(debounce);
     debounce = setTimeout(sync, 200);

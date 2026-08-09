@@ -150,6 +150,18 @@ const routes = {
   'GET /': async (req, res) => send(res, 200, homePage({ stats: await stats() })),
   'GET /badge': async (req, res) => send(res, 200, badgePage()),
 
+  // Step one of the badge flow: the handle has to be on the season list before
+  // the generator is shown at all.
+  'POST /badge': async (req, res) => {
+    const form = await readBody(req);
+    const raw = form.get('username') || '';
+    const username = validateUsername(raw);
+    if (username.error) {
+      return send(res, 400, badgePage({ username: raw, error: username.error }));
+    }
+    return send(res, 200, badgePage({ step: 'build', username: username.value }));
+  },
+
   // Health check for the host: proves the process is up and the database reads.
   'GET /healthz': async (req, res) => {
     const { participants } = await stats();

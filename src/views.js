@@ -220,15 +220,47 @@ season.<span class="f">on</span>(<span class="s">'pull_request'</span>, () =&gt;
   });
 }
 
-export function badgePage() {
+/**
+ * Two steps: prove the handle is on the registered list, then build the badge.
+ * The list lives on the server and is never shipped to the browser, so the
+ * roster of participants is not published by the badge page.
+ */
+export function badgePage({ step = 'verify', username = '', error = '' } = {}) {
+  if (step !== 'build') {
+    return layout({
+      title: 'Contributor badge',
+      active: '/badge',
+      body: `
+<section class="page-head">
+  <p class="eyebrow">Contributor badge</p>
+  <h1>Get your badge</h1>
+  <p>Badges are for registered contributors. Enter the GitHub username you signed up with
+     and we'll check it against the list.</p>
+</section>
+
+<section class="narrow">
+  ${flash(error, 'error')}
+  <form class="panel" method="post" action="/badge" autocomplete="off">
+    <label>
+      GitHub username
+      <input name="username" maxlength="39" required autofocus
+             value="${escape(username)}" placeholder="ada" pattern="[A-Za-z0-9-]{1,39}">
+    </label>
+    <button class="btn primary" type="submit">Verify and continue</button>
+    <p class="hint">Not recognised? Ask an organiser to add your handle to the season list.</p>
+  </form>
+</section>`,
+    });
+  }
+
   return layout({
     title: 'Contributor badge',
     active: '/badge',
     body: `
 <section class="page-head">
-  <p class="eyebrow">Contributor badge</p>
+  <p class="eyebrow">Verified · @${escape(username)}</p>
   <h1>Get your badge</h1>
-  <p>Fill in your details, preview your badge and download it as an image you can post
+  <p>Pick your name and suit, preview the badge and download it as an image you can post
      anywhere.</p>
 </section>
 
@@ -239,18 +271,8 @@ export function badgePage() {
       <input id="f-name" name="name" maxlength="60" placeholder="Ada Lovelace" required>
     </label>
     <label>
-      GitHub username
-      <input id="f-username" name="username" maxlength="39" placeholder="ada" required
-             pattern="[A-Za-z0-9-]{1,39}">
-    </label>
-    <label>
-      Role on the badge
-      <select id="f-role">
-        <option value="Contributor">Contributor</option>
-        <option value="Maintainer">Maintainer</option>
-        <option value="Mentor">Mentor</option>
-        <option value="Campus Lead">Campus Lead</option>
-      </select>
+      GitHub username <span class="opt">(verified)</span>
+      <input id="f-username" name="username" value="${escape(username)}" readonly>
     </label>
     <label>
       Suit theme
@@ -279,6 +301,7 @@ export function badgePage() {
       <button type="button" class="btn primary" id="btn-download">Download PNG</button>
       <a class="btn ghost" href="/submit">Next: submit a PR</a>
     </div>
+    <p class="hint"><a href="/badge">Use a different handle</a></p>
   </form>
 
   <div class="badge-preview">
@@ -288,24 +311,6 @@ export function badgePage() {
 </section>`,
     scripts: `<script src="/badge.js?v=${V}" defer></script>`,
   });
-}
-
-function scoreCallout(scored) {
-  if (!scored) return '';
-  const chips = scored.labels.length
-    ? `<p class="chips">${scored.labels
-        .map((l) => `<span class="chip">${escape(l)}</span>`)
-        .join('')}</p>`
-    : '';
-  const line = scored.tier
-    ? `This pull request is labelled <strong>${escape(scored.tier)}</strong> — worth
-       <strong>${scored.points} points</strong> once an organiser approves it.`
-    : escape(
-        scored.error ||
-          'No difficulty label on it yet. Once the project admin adds one, it will be worth ' +
-            'points — an organiser re-checks at review time.',
-      );
-  return `<div class="score-callout"><p>${line}</p>${chips}</div>`;
 }
 
 export function submitPage({ values = {}, error = '', success = '', scored = null } = {}) {

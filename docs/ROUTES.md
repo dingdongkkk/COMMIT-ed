@@ -9,9 +9,17 @@ Everything the app needs. Nothing more.
 Landing page: what the event is, the four steps, and live counts (contributors, approved
 PRs, points awarded).
 
-### `GET /badge`
+### `GET /badge` · `POST /badge`
 
-The badge generator. Entirely client-side: the visitor types a name and GitHub handle, the
+Two steps. `GET` asks for a GitHub username; `POST` checks it against
+`VALID_GITHUB_IDS` in [src/github-ids.js](../src/github-ids.js) — the same list that guards
+`POST /submit` — and only then renders the generator, with the handle fixed and the role
+always `Contributor`. An unrecognised handle gets a 400 and the form back with the reason.
+
+The list stays on the server, so the roster of registered participants is never published
+to the page.
+
+The generator itself is client-side: the visitor types a name and GitHub handle, the
 card is drawn on a `<canvas>`, and "Download PNG" saves it. Nothing is stored, and no
 GitHub API call is made — the avatar is loaded straight from
 `https://avatars.githubusercontent.com/<username>` with `crossOrigin="anonymous"` so the
