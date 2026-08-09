@@ -8,12 +8,6 @@ request links, and watch the standings.
 **Points come from the pull request's difficulty label**, set by the project admin on the
 repository the PR was opened against:
 
-| Label | Points |
-|---|---|
-| `easy` | 2 |
-| `medium` | 5 |
-| `hard` | 10 |
-
 Nothing reaches the leaderboard on labels alone. An organiser opens each pull request,
 checks the work is real, and approves it — that stamp is what makes the points count. They
 can revoke an approved score at any time, and reinstate it later.
