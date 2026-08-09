@@ -22,10 +22,8 @@ const V = (
 ).slice(0, 12);
 
 const NAV = [
-  ['/', 'Home'],
   ['/get-started', 'Get Started'],
   ['/projects', 'Projects'],
-  ['/badge', 'Badge'],
   ['/submit', 'Submit PR'],
   ['/leaderboard', 'Leaderboard'],
   ['/rules', 'Rules']

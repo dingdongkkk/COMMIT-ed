@@ -1118,7 +1118,13 @@ input:focus, select:focus {
 }
 
 @media (max-width: 520px) {
-  .site-head .cta { display: none; }
+  /* Give the header explicit rows rather than letting four items wrap however
+     they land: logos and wordmark together, then the button, then the nav. */
+  .site-head { row-gap: 10px; }
+  .logo-right { order: 1; margin-left: auto; }
+  .site-head .cta { order: 2; }
+  .site-head nav { order: 3; }
+
   .site-head nav { gap: 12px; }
   .site-head nav a { font-size: 11px; }
   .brand { font-size: 15px; }
@@ -1452,5 +1458,5 @@ input:focus, select:focus {
   display: block;
 }
 
-.logo-left { height: clamp(26px, 5.5vw, 56px); }
-.logo-right { height: clamp(22px, 4.4vw, 42px); }
+.logo-left { height: clamp(26px, 4vw, 46px); }
+.logo-right { height: clamp(22px, 3.2vw, 38px); }
