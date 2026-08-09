@@ -220,3 +220,59 @@ export async function stats() {
     points: Number(row.points),
   };
 }
+
+export async function submittedRepositories() {
+  const { rows } = await run(
+    `SELECT
+       s.pr_url,
+       s.status,
+       s.submitted_at,
+       p.github_username
+     FROM submissions s
+     JOIN participants p ON p.id = s.participant_id
+     ORDER BY s.submitted_at DESC`,
+  );
+
+  const reposMap = new Map();
+
+  for (const row of rows) {
+    const match = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/pull\/\d+$/i.exec(row.pr_url);
+    if (!match) continue;
+
+    const owner = match[1];
+    const repo = match[2];
+    const key = `${owner.toLowerCase()}/${repo.toLowerCase()}`;
+
+    if (!reposMap.has(key)) {
+      reposMap.set(key, {
+        owner,
+        repo,
+        fullName: `${owner}/${repo}`,
+        repoUrl: `https://github.com/${owner}/${repo}`,
+        totalPrs: 0,
+        approvedPrs: 0,
+        contributors: new Set(),
+        latestSubmittedAt: row.submitted_at,
+      });
+    }
+
+    const item = reposMap.get(key);
+    item.totalPrs += 1;
+    if (row.status === 'approved') {
+      item.approvedPrs += 1;
+    }
+    item.contributors.add(row.github_username);
+  }
+
+  return Array.from(reposMap.values()).map((r) => ({
+    owner: r.owner,
+    repo: r.repo,
+    fullName: r.fullName,
+    repoUrl: r.repoUrl,
+    totalPrs: r.totalPrs,
+    approvedPrs: r.approvedPrs,
+    contributorsCount: r.contributors.size,
+    latestSubmittedAt: r.latestSubmittedAt,
+  }));
+}
+

@@ -1087,6 +1087,221 @@ input:focus, select:focus {
   .cta { font-size: 12px; padding: 8px 14px; }
 }
 
+/* ---------- projects page ---------- */
+
+.projects-section {
+  margin-top: 24px;
+}
+
+.empty-projects {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-projects h2 {
+  font-size: 24px;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.project-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 7px 7px 0 var(--ink);
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s, background 0.35s;
+}
+
+.project-card::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 170px;
+  height: 170px;
+  background-image: var(--web);
+  background-size: 170px 170px;
+  opacity: 0;
+  transform: rotate(-12deg) scale(0.7);
+  transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.project-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 5px;
+  background: var(--yellow);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out);
+}
+
+.project-card:hover {
+  transform: translate(-3px, -5px);
+  background: var(--pink-pale);
+  box-shadow: 12px 12px 0 var(--ink);
+}
+
+.project-card:hover::before {
+  opacity: 0.35;
+  transform: rotate(0deg) scale(1);
+}
+
+.project-card:hover::after {
+  transform: scaleX(1);
+}
+
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.repo-name-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.repo-name-group h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.repo-name-group h2 a {
+  text-decoration: none;
+  color: var(--ink);
+  transition: color 0.25s;
+}
+
+.repo-name-group h2 a:hover {
+  color: var(--blue-bright);
+}
+
+.star-badge {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 3px 9px;
+  box-shadow: 2px 2px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.project-desc {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.tech-stack-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tech-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tech-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tech-chip {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.8px solid var(--ink);
+  border-radius: 6px;
+  padding: 2px 8px;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.project-card:hover .tech-chip {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.project-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 2px dashed rgba(21, 10, 18, 0.18);
+}
+
+.project-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.project-stats strong {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn.small {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-width: 2px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+@media (max-width: 600px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Anyone who asks for less motion gets a still page. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1098,3 +1313,84 @@ input:focus, select:focus {
   .reveal { opacity: 1; transform: none; }
   .hero h1 .ltr, .skyline .win { opacity: 1; transform: none; }
 }
+
+
+/* ---------- GitHub Account Verification ---------- */
+.github-id-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.github-id-wrap input {
+  padding-right: 42px;
+}
+
+.github-id-wrap.is-valid input {
+  border-color: #059669;
+  background: #ecfdf5;
+  box-shadow: 3px 3px 0 #059669;
+}
+
+.github-id-wrap.is-valid input:focus {
+  background: #d1fae5;
+  box-shadow: 4px 4px 0 #059669;
+}
+
+.github-id-wrap.is-invalid input {
+  border-color: var(--red);
+  background: #fef2f2;
+  box-shadow: 3px 3px 0 var(--red);
+}
+
+.github-id-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 4px;
+  transition: all 0.25s var(--ease-snap);
+}
+
+.github-id-status.valid {
+  color: #047857;
+}
+
+.github-id-status.invalid {
+  color: var(--red);
+}
+
+.badge-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: #fff;
+  box-shadow: 2px 2px 0 currentColor;
+}
+
+.github-id-status.valid .badge-check-icon {
+  background: #10b981;
+  color: #fff;
+  border-color: #047857;
+  box-shadow: 2px 2px 0 #047857;
+}
+
+.github-id-status.invalid .badge-check-icon {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.badge-check-text {
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+

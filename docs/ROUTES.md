@@ -36,6 +36,10 @@ Renders the form. Three fields: `name` (optional), `github_username`, `pr_url`.
 
 No login. No email. The user is done.
 
+### `GET /projects`
+
+Lists all submitted repositories with their description, tech stack tags (languages & topics), GitHub star count, and submission metrics (total PRs, approved PRs, unique contributors).
+
 ### `GET /leaderboard`
 
 Runs the [leaderboard query](SCHEMA.md#leaderboard-query). Renders rank, username, PR

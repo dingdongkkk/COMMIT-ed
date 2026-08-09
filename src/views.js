@@ -19,6 +19,7 @@ const NAV = [
   ['/', 'Home'],
   ['/badge', 'Badge'],
   ['/submit', 'Submit PR'],
+  ['/projects', 'Projects'],
   ['/leaderboard', 'Leaderboard'],
 ];
 
@@ -329,12 +330,15 @@ export function submitPage({ values = {}, error = '', success = '', scored = nul
       <input name="name" maxlength="60" value="${escape(values.name)}" placeholder="Ada Lovelace">
     </label>
     <label>
-      GitHub username
-      <input name="github_username" maxlength="40" required
-             value="${escape(values.github_username)}" placeholder="ada">
+      <span>GitHub username</span>
+      <div class="github-id-wrap">
+        <input name="github_username" maxlength="40" required
+               value="${escape(values.github_username)}" placeholder="ada" autocomplete="off">
+        <div id="github-id-status" class="github-id-status" aria-live="polite"></div>
+      </div>
     </label>
     <label>
-      Pull request link
+      <span>Pull request link</span>
       <input name="pr_url" type="url" required value="${escape(values.pr_url)}"
              placeholder="https://github.com/owner/repo/pull/123">
     </label>
@@ -345,6 +349,70 @@ export function submitPage({ values = {}, error = '', success = '', scored = nul
        and approves it.</p>
   </form>
 </section>`,
+    scripts: `<script src="/submit.js?v=${V}" defer></script>`,
+  });
+}
+
+export function projectsPage({ projects }) {
+  const content =
+    projects.length === 0
+      ? `<div class="panel empty-projects">
+          <h2>No submitted repositories yet</h2>
+          <p>As contributors submit pull requests, the repositories will automatically appear here with their descriptions and tech stacks.</p>
+          <div class="row" style="margin-top: 12px;">
+            <a class="btn primary" href="/submit">Submit a pull request →</a>
+          </div>
+        </div>`
+      : `<div class="projects-grid">
+    ${projects
+      .map((p) => {
+        const techChips = p.techStack.length
+          ? p.techStack
+              .map((tech) => `<span class="tech-chip">${escape(tech)}</span>`)
+              .join('')
+          : '<span class="tech-chip">Open Source</span>';
+
+        return `<article class="project-card">
+          <div class="project-card-header">
+            <div class="repo-name-group">
+              <span class="tag">Repo</span>
+              <h2><a href="${escape(p.repoUrl)}" target="_blank" rel="noopener noreferrer">${escape(p.fullName)} ↗</a></h2>
+            </div>
+            ${p.stars ? `<span class="star-badge" title="GitHub Stars">★ ${p.stars}</span>` : ''}
+          </div>
+          <p class="project-desc">${escape(p.description)}</p>
+
+          <div class="tech-stack-section">
+            <span class="tech-label">Tech Stack</span>
+            <div class="tech-chips">${techChips}</div>
+          </div>
+
+          <div class="project-footer">
+            <div class="project-stats">
+              <span title="Total PRs submitted"><strong>${p.totalPrs}</strong> PR${p.totalPrs === 1 ? '' : 's'}</span>
+              <span title="Approved PRs"><strong>${p.approvedPrs}</strong> Approved</span>
+              <span title="Unique Contributors"><strong>${p.contributorsCount}</strong> Contributor${p.contributorsCount === 1 ? '' : 's'}</span>
+            </div>
+            <div class="project-actions">
+              <a class="btn small primary" href="/submit">Submit PR</a>
+              <a class="btn small ghost" href="${escape(p.repoUrl)}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+            </div>
+          </div>
+        </article>`;
+      })
+      .join('\n')}
+  </div>`;
+
+  return layout({
+    title: 'Submitted Projects',
+    active: '/projects',
+    body: `
+<section class="page-head">
+  <p class="eyebrow">Event Repositories</p>
+  <h1>Submitted Projects</h1>
+  <p>Explore all submitted open-source repositories, discover their tech stacks, and start contributing to earn leaderboard points!</p>
+</section>
+<section class="projects-section">${content}</section>`,
   });
 }
 
