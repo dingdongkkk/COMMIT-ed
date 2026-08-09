@@ -72,7 +72,7 @@ ${head}
 <header class="site-head" style="position: relative;">
   <!-- Far Left Logo -->
   <img src="/protocol1.png" alt="Protocol Logo" class="nav-logo logo-left"
-       width="3654" height="1838">
+       width="280" height="141">
 
   <a class="brand" href="/">COMMIT<span>-ed</span>.</a>
   <nav>
@@ -85,7 +85,7 @@ ${head}
 
   <!-- Far Right Logo -->
   <img src="/ieee1.png" alt="IEEE Logo" class="nav-logo logo-right"
-       width="816" height="334">
+       width="280" height="114">
 </header>
 <main>
 ${body}

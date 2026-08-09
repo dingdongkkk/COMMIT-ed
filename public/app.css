@@ -1466,9 +1466,9 @@ input:focus, select:focus {
  */
 .logo-left {
   height: clamp(26px, 4vw, 46px);
-  aspect-ratio: 3654 / 1838;
+  aspect-ratio: 280 / 141;
 }
 .logo-right {
   height: clamp(22px, 3.2vw, 38px);
-  aspect-ratio: 816 / 334;
+  aspect-ratio: 280 / 114;
 }
