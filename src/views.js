@@ -50,7 +50,7 @@ ${body}
 </main>
 <footer class="site-foot">
   <span>COMMIT-ed · build in public with your campus community</span>
-  <a href="/admin">Admin</a>
+  <a href="https://protocolbmsce.in/core">About us</a>
 </footer>
 <script src="/fx.js?v=${V}" defer></script>
 ${scripts}
@@ -422,23 +422,16 @@ export function leaderboardPage({ rows }) {
       ? `<p class="empty">No approved submissions yet. Once organisers review the first
          pull requests, the standings appear here.</p>`
       : `<table class="board">
-  <thead><tr><th>#</th><th>Contributor</th><th>PRs</th><th>Points</th></tr></thead>
+  <thead><tr><th>Standing</th><th>GitHub username</th><th>Total points</th></tr></thead>
   <tbody>
     ${rows
       .map(
         (r, i) => `<tr${i < 3 ? ` class="top top-${i + 1}"` : ''}>
       <td class="rank">${i + 1}</td>
-      <td class="who">
-        <img src="https://avatars.githubusercontent.com/${escape(r.github_username)}?s=64"
-             alt="" width="32" height="32" loading="lazy"
-             onerror="this.style.visibility='hidden'">
-        <span>
-          <strong>${escape(r.display_name || r.github_username)}</strong>
-          <a href="https://github.com/${escape(r.github_username)}" target="_blank"
-             rel="noopener noreferrer">@${escape(r.github_username)}</a>
-        </span>
+      <td class="user">
+        <a href="https://github.com/${escape(r.github_username)}" target="_blank"
+           rel="noopener noreferrer">@${escape(r.github_username)}</a>
       </td>
-      <td>${r.prs}</td>
       <td class="pts">${r.total_points}</td>
     </tr>`,
       )

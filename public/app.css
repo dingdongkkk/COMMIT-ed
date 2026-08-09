@@ -941,6 +941,13 @@ input:focus, select:focus {
   transition: color 0.3s, transform 0.3s var(--ease-snap);
 }
 .board tbody tr:hover .pts { color: var(--red); transform: scale(1.12); }
+.board .user a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.board .user a:hover { color: var(--red); }
 .board .who { display: flex; align-items: center; gap: 13px; }
 .board .who img {
   border-radius: 50%;
