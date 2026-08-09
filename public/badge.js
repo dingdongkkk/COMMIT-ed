@@ -55,20 +55,12 @@ function loadArt(src) {
   img.src = src;
 }
 
-/**
- * Centre-crop to fill the card: never squashed, never letterboxed. A slight
- * blur pushes the art back so the name reads as the subject — without it the
- * artwork's own lettering competes with the contributor's name.
- */
+/** Centre-crop to fill the card: never squashed, never letterboxed. */
 function drawArt(image) {
   const scale = Math.max(W / image.width, H / image.height);
   const w = image.width * scale;
   const h = image.height * scale;
-  ctx.save();
-  ctx.filter = 'blur(3px)';
-  // Overdraw the edges so the blur doesn't leave soft borders inside the card.
-  ctx.drawImage(image, (W - w) / 2 - 8, (H - h) / 2 - 8, w + 16, h + 16);
-  ctx.restore();
+  ctx.drawImage(image, (W - w) / 2, (H - h) / 2, w, h);
 }
 
 const state = {
@@ -254,25 +246,25 @@ function draw() {
 
   if (art) {
     drawArt(art);
-    // Heavier on the left where the name and avatar sit, lighter on the right
-    // so the artwork still reads.
-    const scrim = ctx.createLinearGradient(0, 0, W, 0);
-    scrim.addColorStop(0, hexToRgba(bg2, 0.97));
-    scrim.addColorStop(0.5, hexToRgba(bg2, 0.93));
-    scrim.addColorStop(0.72, hexToRgba(bg2, 0.72));
-    scrim.addColorStop(1, hexToRgba(bg2, 0.4));
+    // Just enough shading on the left to hold the name and handle; the rest of
+    // the card is left alone so the artwork actually reads.
+    const scrim = ctx.createLinearGradient(0, 0, W * 0.78, 0);
+    scrim.addColorStop(0, hexToRgba(bg2, 0.82));
+    scrim.addColorStop(0.45, hexToRgba(bg2, 0.5));
+    scrim.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = scrim;
     ctx.fillRect(0, 0, W, H);
 
-    // A second wash from the bottom keeps the footer line legible over art.
-    const floor = ctx.createLinearGradient(0, H * 0.6, 0, H);
+    // A thin wash under the footer line, nothing more.
+    const floor = ctx.createLinearGradient(0, H * 0.78, 0, H);
     floor.addColorStop(0, 'rgba(0,0,0,0)');
-    floor.addColorStop(1, hexToRgba(bg2, 0.85));
+    floor.addColorStop(1, hexToRgba(bg2, 0.72));
     ctx.fillStyle = floor;
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Suit glow top right, webbing glow bottom left
+  // Suit glow top right, webbing glow bottom left — under the art, so only
+  // worth drawing when there is no art.
   const glow = ctx.createRadialGradient(W - 100, -40, 20, W - 100, -40, 560);
   glow.addColorStop(0, hexToRgba(accent, 0.42));
   glow.addColorStop(1, 'rgba(0,0,0,0)');
@@ -285,22 +277,23 @@ function draw() {
   ctx.fillStyle = glow2;
   ctx.fillRect(0, 0, W, H);
 
-  // Webs in the top-right and bottom-left corners
-  drawWeb(W, 0, 430, 5, 9, Math.PI * 0.5, Math.PI, hexToRgba(accent, 0.3));
-  drawWeb(0, H, 330, 4, 8, -Math.PI * 0.5, 0, hexToRgba(secondary, 0.26));
+  // Webs, halftone and speed streaks only decorate a plain card. Over
+  // background art they just add clutter and hide what you came to see.
+  if (!art) {
+    drawWeb(W, 0, 430, 5, 9, Math.PI * 0.5, Math.PI, hexToRgba(accent, 0.3));
+    drawWeb(0, H, 330, 4, 8, -Math.PI * 0.5, 0, hexToRgba(secondary, 0.26));
 
-  // Halftone wash behind the identity block
-  drawHalftone(470, 300, 230, accent);
+    drawHalftone(470, 300, 230, accent);
 
-  // Diagonal speed streaks
-  ctx.strokeStyle = hexToRgba(secondary, 0.3);
-  ctx.lineWidth = 3;
-  for (let i = 0; i < 5; i += 1) {
-    const y = 150 + i * 26;
-    ctx.beginPath();
-    ctx.moveTo(W - 300 + i * 14, y);
-    ctx.lineTo(W - 120 + i * 14, y - 60);
-    ctx.stroke();
+    ctx.strokeStyle = hexToRgba(secondary, 0.3);
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 5; i += 1) {
+      const y = 150 + i * 26;
+      ctx.beginPath();
+      ctx.moveTo(W - 300 + i * 14, y);
+      ctx.lineTo(W - 120 + i * 14, y - 60);
+      ctx.stroke();
+    }
   }
   ctx.restore();
 
@@ -317,6 +310,20 @@ function draw() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 
+  /**
+   * The small print is light grey, which disappears on pale artwork. A soft
+   * dark shadow makes it hold on any background — only needed when art is on.
+   */
+  const smallTextShadow = () => {
+    if (!art) return;
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 8;
+  };
+  const clearShadow = () => {
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  };
+
   // Brand row
   ctx.fillStyle = '#f5f6fa';
   ctx.font = `800 italic 32px ${FONT}`;
@@ -326,9 +333,11 @@ function draw() {
   ctx.fillText('-ed', 62 + brandW, 86);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(245,246,250,0.65)';
+  smallTextShadow();
+  ctx.fillStyle = art ? 'rgba(255,255,255,0.92)' : 'rgba(245,246,250,0.65)';
   ctx.font = `700 14px ${MONO}`;
   ctx.fillText('OPEN SOURCE SEASON', W - 62, 84);
+  clearShadow();
   ctx.textAlign = 'left';
 
   // Avatar
@@ -349,9 +358,11 @@ function draw() {
   ctx.fillStyle = '#ffffff';
   ctx.fillText(name, left, 300);
 
+  smallTextShadow();
   ctx.fillStyle = hexToRgba(secondary, 0.95);
   ctx.font = `600 24px ${MONO}`;
   ctx.fillText(`@${state.username || 'github-handle'}`, left, 344);
+  clearShadow();
 
   // Role banner — a skewed comic tag rather than a soft pill
   ctx.font = `800 18px ${FONT}`;
@@ -383,13 +394,15 @@ function draw() {
   ctx.lineTo(W - 62, 496);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(245,246,250,0.5)';
+  smallTextShadow();
+  ctx.fillStyle = art ? 'rgba(255,255,255,0.85)' : 'rgba(245,246,250,0.5)';
   ctx.font = `600 15px ${MONO}`;
   ctx.fillText('with great commits comes great responsibility', 62, 536);
   ctx.textAlign = 'right';
   ctx.fillStyle = accent;
   ctx.font = `800 16px ${MONO}`;
   ctx.fillText('#COMMITed', W - 62, 536);
+  clearShadow();
   ctx.textAlign = 'left';
 }
 
