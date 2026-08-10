@@ -204,6 +204,29 @@ export async function adjustSubmission(id, { status, points, note }) {
   return row ? 'pending' : 'missing';
 }
 
+/**
+ * Removes a submission outright, and the participant with it if that was their
+ * only one. Revoking a score only hides it from the leaderboard; test rows
+ * still sit in the reviewed list and still count as contributors, which is not
+ * what "clear the leaderboard" means before an event.
+ */
+export async function deleteSubmission(id) {
+  const row = await one('SELECT participant_id FROM submissions WHERE id = ?', [id]);
+  if (!row) return 'missing';
+
+  await run('DELETE FROM submissions WHERE id = ?', [id]);
+
+  const remaining = await one(
+    'SELECT COUNT(*) AS n FROM submissions WHERE participant_id = ?',
+    [row.participant_id],
+  );
+  if (Number(remaining.n) === 0) {
+    await run('DELETE FROM participants WHERE id = ?', [row.participant_id]);
+    return 'deleted-with-participant';
+  }
+  return 'deleted';
+}
+
 export async function stats() {
   const row = await one(
     `SELECT

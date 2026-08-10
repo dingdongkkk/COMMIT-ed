@@ -8,6 +8,7 @@ import {
   findOrCreateParticipant,
   insertSubmission,
   adjustSubmission,
+  deleteSubmission,
   getSubmission,
   leaderboard,
   readLabels,
@@ -320,6 +321,20 @@ async function handleReview(req, res, id) {
   redirect(res, '/admin');
 }
 
+async function handleDelete(req, res, id) {
+  if (!requireAdmin(req, res)) return;
+  const form = await readBody(req);
+  if (!csrfValid(req, form.get('csrf'))) {
+    return send(res, 403, errorPage(403, 'Bad CSRF token. Reload the admin page.', '/admin'));
+  }
+
+  const outcome = await deleteSubmission(id);
+  if (outcome === 'missing') {
+    return send(res, 404, errorPage(404, 'Submission not found.', '/admin'));
+  }
+  redirect(res, '/admin');
+}
+
 async function handleAdjust(req, res, id) {
   if (!requireAdmin(req, res)) return;
   const form = await readBody(req);
@@ -387,11 +402,14 @@ export async function handle(req, res) {
       return;
     }
 
-    const action = pathname.match(/^\/admin\/submissions\/(\d+)\/(review|adjust|refresh)$/);
+    const action = pathname.match(
+      /^\/admin\/submissions\/(\d+)\/(review|adjust|refresh|delete)$/,
+    );
     if (action && req.method === 'POST') {
       const id = Number(action[1]);
       if (action[2] === 'review') return await handleReview(req, res, id);
       if (action[2] === 'adjust') return await handleAdjust(req, res, id);
+      if (action[2] === 'delete') return await handleDelete(req, res, id);
       return await handleRefresh(req, res, id);
     }
 

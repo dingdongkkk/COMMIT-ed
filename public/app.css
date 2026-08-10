@@ -984,6 +984,9 @@ input:focus, select:focus {
 .pill.approved { background: #c9f7e5; color: #0c5c45; }
 .pill.rejected { background: #ffd9df; color: #8e0f22; }
 
+/* Delete sits under the adjust controls, deliberately a separate action. */
+.board .adjust .delete-form { margin-top: 8px; }
+
 /* Correcting a score after the fact, inline in the reviewed table. */
 .board .adjust form {
   display: flex;

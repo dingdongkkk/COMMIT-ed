@@ -20,12 +20,21 @@ export function normalizeGithubId(raw) {
 }
 
 /**
- * Checks if a given username is in the valid GitHub IDs list.
+ * The list above is written the way GitHub displays each handle, capitals and
+ * all, while the input is lowercased before comparison. Normalising the list
+ * once here is what makes the two meet — comparing raw entries rejected every
+ * username containing a capital letter.
+ */
+const VALID_GITHUB_ID_SET = new Set(VALID_GITHUB_IDS.map(normalizeGithubId));
+
+/**
+ * Checks if a given username is in the valid GitHub IDs list. GitHub handles
+ * are case-insensitive, so @AdarshHegde001 and @adarshhegde001 are one person.
  * @param {string} rawUsername
  * @returns {boolean}
  */
 export function isValidGithubId(rawUsername) {
   const normalized = normalizeGithubId(rawUsername);
   if (!normalized) return false;
-  return VALID_GITHUB_IDS.includes(normalized);
+  return VALID_GITHUB_ID_SET.has(normalized);
 }

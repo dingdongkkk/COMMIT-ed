@@ -553,6 +553,11 @@ function reviewedRow(s, csrf) {
           : `<button class="btn small primary" name="action" value="restore" type="submit">Restore</button>`
       }
     </form>
+    <form method="post" action="/admin/submissions/${s.id}/delete" class="delete-form"
+          onsubmit="return confirm('Delete this submission permanently? This cannot be undone.')">
+      <input type="hidden" name="csrf" value="${escape(csrf)}">
+      <button class="btn small danger" type="submit" title="Remove the row entirely">Delete</button>
+    </form>
   </td>
 </tr>`;
 }
