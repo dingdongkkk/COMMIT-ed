@@ -2,31 +2,24 @@
 (function () {
   'use strict';
 
-  // Hardcoded dummy array of valid GitHub IDs (lowercased)
-  const VALID_GITHUB_IDS = [
-    'octocat',
-    'ada',
-    'torvalds',
-    'gaearon',
-    'kadenstack',
-    'sindresorhus',
-    'danabramov',
-    'yyx990803',
-    'tj',
-    'defunkt',
-    'mojombo',
-    'pjhyett',
-    'wycats',
-    'ezmobius',
-    'techlead',
-    'dhh',
-    'ry',
-    'antirez',
-    'vczh',
-    'sw-yx',
-    'addyosmani',
-    'paulirish',
-  ];
+  /**
+   * No list here on purpose. The roster lives on the server; this asks it.
+   * A second copy in the browser drifted out of date — real participants saw
+   * "Unverified" while demo names got a tick — and it published every handle
+   * in the page source.
+   */
+  let lastQuery = 0;
+
+  async function isRegistered(username) {
+    const stamp = ++lastQuery;
+    const res = await fetch('/verify-username?u=' + encodeURIComponent(username));
+    if (!res.ok) throw new Error('lookup failed');
+    const data = await res.json();
+    // A slower earlier request must not overwrite a newer answer.
+    if (stamp !== lastQuery) return null;
+    return Boolean(data.valid);
+  }
+
 
   function normalize(username) {
     return String(username || '')
@@ -42,7 +35,7 @@
 
     if (!input || !statusEl) return;
 
-    function verify() {
+    async function verify() {
       const raw = input.value;
       const clean = normalize(raw);
 
@@ -53,7 +46,18 @@
         return;
       }
 
-      const isValid = VALID_GITHUB_IDS.includes(clean);
+      let isValid;
+      try {
+        isValid = await isRegistered(clean);
+      } catch {
+        // Network trouble is not the contributor's problem: say nothing and
+        // let the server decide when they submit.
+        statusEl.innerHTML = '';
+        statusEl.className = 'github-id-status';
+        if (wrapEl) wrapEl.classList.remove('is-valid', 'is-invalid');
+        return;
+      }
+      if (isValid === null) return;
 
       if (isValid) {
         statusEl.className = 'github-id-status valid';
@@ -87,9 +91,16 @@
       }
     }
 
-    input.addEventListener('input', verify);
-    input.addEventListener('keyup', verify);
-    input.addEventListener('change', verify);
+    // Every keystroke used to be a comparison against a local array; each one
+    // is now a request, so wait for a pause in typing.
+    let timer;
+    const scheduleVerify = () => {
+      clearTimeout(timer);
+      timer = setTimeout(verify, 250);
+    };
+
+    input.addEventListener('input', scheduleVerify);
+    input.addEventListener('change', scheduleVerify);
     input.addEventListener('blur', verify);
 
     // Initial check on load

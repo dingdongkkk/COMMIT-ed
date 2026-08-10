@@ -30,6 +30,7 @@ import {
   rateLimiter,
 } from './security.js';
 import { validateName, validatePrUrl, validateUsername } from './validate.js';
+import { isValidGithubId } from './github-ids.js';
 import {
   adminLoginPage,
   adminPage,
@@ -89,6 +90,8 @@ const PUBLIC_DIR = fileURLToPath(new URL('../public', import.meta.url));
 // not per-person quotas. Login only spends budget on a wrong password.
 const submitLimit = rateLimiter({ windowMs: 60_000, max: 60 });
 const loginFailures = rateLimiter({ windowMs: 15 * 60_000, max: 25 });
+// Generous: this fires while someone types their own handle.
+const verifyLimit = rateLimiter({ windowMs: 60_000, max: 120 });
 
 const MIME = {
   '.css': 'text/css; charset=utf-8',
@@ -157,6 +160,26 @@ const routes = {
   'GET /get-started': async (req, res) => send(res, 200, getStartedView()),
   'GET /rules': async (req, res) => send(res, 200, rulesPage()),
   'GET /badge': async (req, res) => send(res, 200, badgePage()),
+
+  /**
+   * Answers yes/no for one handle so the submit form can show a tick as you
+   * type. It exists so the roster lives in exactly one place: shipping the
+   * list to the browser meant a second copy that drifted, and it published
+   * every participant's handle in the page source.
+   */
+  'GET /verify-username': async (req, res) => {
+    if (!verifyLimit(clientIp(req))) {
+      return send(res, 429, '{"valid":false,"error":"rate_limited"}', {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+    }
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const valid = isValidGithubId(url.searchParams.get('u') || '');
+    send(res, 200, JSON.stringify({ valid }), {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    });
+  },
 
   // Step one of the badge flow: the handle has to be on the season list before
   // the generator is shown at all.
