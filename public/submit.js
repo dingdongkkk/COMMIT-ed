@@ -4,28 +4,8 @@
 
   // Hardcoded dummy array of valid GitHub IDs (lowercased)
   const VALID_GITHUB_IDS = [
-    'octocat',
-    'ada',
-    'torvalds',
-    'gaearon',
-    'kadenstack',
-    'sindresorhus',
-    'danabramov',
-    'yyx990803',
-    'tj',
-    'defunkt',
-    'mojombo',
-    'pjhyett',
-    'wycats',
-    'ezmobius',
-    'techlead',
-    'dhh',
     'ry',
-    'antirez',
-    'vczh',
-    'sw-yx',
-    'addyosmani',
-    'paulirish',
+    'himaashok0410-dotcom', 'devjain010', 'CalmOutlaws', 'Harshita-Shreevastav', 'vinay-d07', 'natalipawar', 'manaswi1710', 'decodechinnu18', 'nydhile77', 'shreyasmulekar', 'Kritika-Panwar-151', 'sakshisarraf31-gif', 'Ananya-Shetty-24', 'vismay-b-srinivas', 'achintyakumar237', 'abhishekv898', 'AnishVNairy', 'shivanvithajayam', 'NAYANA-N-13', 'bhaktichethan-bit', 'akshat-005', 'kusuma-r-dev', 'dmrudula-19', 'punithkumar-060308', 'itz1cr', 'XCcutor', 'AdiIrl18', 'adi-sach', 'dharyagoyal', 'anwesha01b', 'Rajen5145', 'AdithyaND12', 'smruthi006', 'Keerthana-M-06', 'archirkhatri', 'pushkar-code', 'sharathprime10-coder', 'Roshni13102007', 'LAKSHITA1206', 'Kakul29', 'NaisargPurohit', 'vedxnt-10', 'saicharanraju2005', 'SaiChiranth-dev', 'anikanandish', 'achinthyam08', 'soha-k10', 'hrudaysai07', 'MishthyAgrawal', 'Harryhist', 'AdarshHegde001', 'HazalAliNachan', 'hema-ga', 'shashvath33-ux', 'Darshan-Biligiri', 'Dedeepya25', 'adarsh-mali'
   ];
 
   function normalize(username) {
