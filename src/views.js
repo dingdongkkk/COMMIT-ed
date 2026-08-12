@@ -699,11 +699,12 @@ export function getStartedView() {
 <section class="page-head">
   <p class="eyebrow">Learn the ropes</p>
   <h1>Get Started</h1>
-  <p>Watch the tutorial below to learn how to contribute to the event.</p>
+  <p>Watch the tutorials below to learn how to contribute to the event.</p>
 </section>
 <section class="narrow">
   <div class="panel" style="padding: 0; overflow: hidden; border: 4px solid var(--ink); box-shadow: 8px 8px 0px var(--ink);">
     <iframe width="100%" height="500" src="https://www.youtube.com/embed/IKkJVt8TQwA?autoplay=1&mute=1&si=dQdFWHbdTb7drkTc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block;"></iframe>
+    <iframe width="100%" height="500" src="https://www.youtube.com/embed/JZE8L8ux7Vk?si=6hWYj89pUIBxmdmj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </section>
     `
